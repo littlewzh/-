@@ -26,8 +26,8 @@ syntax: lexical syntax-c
 lexical: $(LFILE)
 	$(FLEX) -o $(LFC) $(LFILE)
 
-syntax-c: $(YFILE)
-	$(BISON) -o $(YFC) -d -v $(YFILE)
+#syntax-c: $(YFILE)
+#	$(BISON) -o $(YFC) -d -v $(YFILE)
 
 -include $(patsubst %.o, %.d, $(OBJS))
 
