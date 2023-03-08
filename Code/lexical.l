@@ -1,7 +1,11 @@
+%{
+
+%}
+
 digit   [0-9]
 letter  [_a-zA-Z]
 %%
-(\/\*)             {}
+"/*"([^*]|\*+[^*/])*\*+"/"   {}
 "struct"                     {printf("17    : %s\n",yytext);}
 "return"                     {printf("18    : %s\n",yytext);}
 "if"                         {printf("19    : %s\n",yytext);}
@@ -9,7 +13,8 @@ letter  [_a-zA-Z]
 "while"                      {printf("21    : %s\n",yytext);}
 (int|float)                  {printf("10    : %s\n",yytext);}
 {letter}({digit}|{letter})*  {printf("ID    : %s\n",yytext);}
-{digit}+                     {printf("INT   : %s\n",yytext);} 
+[1-9]{digit}*                {printf("INT10   : %s\n",yytext);} 
+0[1-9]+                      {printf("INT10   : %s\n",yytext);} 
 {digit}+\.{digit}+           {printf("FLOAT : %s\n",yytext);}
 ";"                          {printf("ID    : %s\n",yytext);} 
 ","                          {printf("ID    : %s\n",yytext);}
