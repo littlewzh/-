@@ -21,16 +21,18 @@ letter  [_a-zA-Z]
                               return INT;}                                      //INT是无符号，不以0开头就行
 
 0[0-7]+                      {printf("8INT      : %s\n",yytext);
-                              
+                              return INT;
                               }                                                 //8
-0(x|X)([0-9A-Fa-f])*         {printf("16INT     : %s\n",yytext);}               //16
+0(x|X)([0-9A-Fa-f])*         {printf("16INT     : %s\n",yytext);
+                              return INT;
+                             }               //16
 
 {digit}+\.{digit}+           {printf("FLOAT     : %s\n",yytext);
                               yylval.type_float = atof(yytext);
                               return FLOAT;}
 
 
-({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)[-+]?{digit}*        {printf("FLOATE : %s\n",yytext);}
+({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)[-+]?{digit}*        {printf("FLOATE    : %s\n",yytext);return FLOAT;}
 ";"                          {printf("SEMI      : %s\n",yytext);return SEMI;} 
 ","                          {printf("COMMA     : %s\n",yytext);return COMMA;}
 >=|<=|>|<|==|!=              {printf("RELOP     : %s\n",yytext);return RELOP;}

@@ -38,7 +38,9 @@ ExtDefList :
     | ExtDef ExtDefList 
     ;
 ExtDef : Specifier ExtDecList SEMI
+    | Specifier ExtDecList error SEMI       //error
     | Specifier SEMI
+    | Specifier error SEMI                //error
     | Specifier FunDec CompSt
     ;
 ExtDecList : VarDec
