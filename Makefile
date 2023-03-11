@@ -1,4 +1,4 @@
-USER := ？
+USER := 201240080
 
 .PHONY: zip rm git all
 
@@ -7,7 +7,7 @@ USER := ？
 all: zip git
 
 zip:
-	zip -r $(addsuffix .zip,$(USER)) Code/ parser README report.pdf
+	zip -r $(addsuffix .zip,$(USER)) Code/ report.pdf
 
 git:
 	@git add -A --ignore-errors

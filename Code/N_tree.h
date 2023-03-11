@@ -51,7 +51,7 @@ void Ninsert(Tnode* p,int n,...){
 }
 void dfs(Tnode* s,int dep){
 	if(s->type==0){
-		printf("%*s%s(%d)\n",dep*2,"",s->name,s->line);
+		printf("%*s%s (%d)\n",dep*2,"",s->name,s->line);
 	}else{
 		printf("%*s%s",dep*2,"",s->name);
 		switch(s->type){
