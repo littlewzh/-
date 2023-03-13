@@ -3,7 +3,7 @@
 
     #include <stdio.h>
     #include <string.h>
-    #include "syntax.tab.h"
+    #include "syntax.tab.h"//使得flex可以返回bison定义的词法类型
     #include <assert.h>
     int yycolumn = 1;
     #define YY_USER_ACTION \
@@ -18,7 +18,7 @@
      #define debug(...) assert(1)
     #endif
 %}
-%option yylineno
+%option yylineno 
 digit   [0-9]
 letter  [_a-zA-Z]
 
@@ -33,14 +33,42 @@ letter  [_a-zA-Z]
 
 (0|[1-9]{digit}*)            {debug("INT       : %s\n",yytext);yylval=create_node("INT",INT,yylineno);yylval->i_val = atoi(yytext);return INT;}                                      //INT是无符号，不以0开头就行
 
-0[0-7]+                      {debug("8INT      : %s\n",yytext);return INT;}                                                 //8
+0[0-7]+                      {debug("8INT      : %s\n",yytext);yylval=create_node("INT",INT,yylineno);char * p=yytext;
+  p++;int tmp=0;
+  while(*p!='\0'){tmp=tmp*8+*p-48;p++;}
+  yylval->i_val = tmp;return INT;}                                                 //8
 
-0(x|X)([0-9A-Fa-f])*         {debug("16INT     : %s\n",yytext);return INT;}               //16
-
-{digit}+\.{digit}+           {debug("FLOAT     : %s\n",yytext);yylval=create_node("FLOAT",FLOAT,yylineno);yylval->f_val = atof(yytext);return FLOAT;}
-
-({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)[-+]?{digit}*        {debug("FLOATE    : %s\n",yytext);return FLOAT;}
-
+0(x|X)([0-9A-Fa-f])*         {debug("16INT     : %s\n",yytext);yylval=create_node("INT",INT,yylineno);char * p=yytext;
+  p+=2; int tmp = 0;
+	while (*p != '\0') {
+		if (*p >= '0' && *p <= '9')tmp = tmp * 16 + *p - '0';
+		if (*p >= 'A' && *p <= 'F')tmp = tmp * 16 + *p - 'A' + 10;
+		if (*p >= 'a' && *p <= 'f')tmp = tmp * 16 + *p - 'a' + 10;
+		p++;
+	}yylval->i_val = tmp;return INT;}               //16
+({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)?[-+]?{digit}*        {debug("FLOATE    : %s\n",yytext);yylval=create_node("FLOAT",FLOAT,yylineno);char * p=yytext;
+  float flans = 0;
+	int flstatus = 0,fltmp[3] = {0,0,0}, flwid1 = 0, flflag2 = 1;//三阶段分别解析数字：tmp0表示小数点前，1表示小数点后，2表示指数,wid1表示小数位数，flag2表示指数的正负
+	while (*p != '\0') {
+		switch (*p) {
+		case  '.':flstatus = 1; break;
+		case  'e':
+		case  'E': flstatus = 2; break;
+		case '+':if (flstatus == 2)flflag2 = 1; break;
+		case '-':if (flstatus == 2)flflag2 = -1; break;
+		default: 
+			fltmp[flstatus] = fltmp[flstatus] * 10 + *p - '0';
+			if (flstatus == 1)flwid1++;
+		}
+		p++;
+	}
+	flans = 1.0 * fltmp[0];//整数部分
+	float ftmp = 1.0 * fltmp[1];
+	while (flwid1--)ftmp *= 0.1;
+	flans += ftmp;//基数部分
+	if (flflag2>0) while (fltmp[2]--)flans *= 10;
+	else  while (fltmp[2]--)flans *= 0.1;
+    yylval->f_val = flans;return FLOAT;}
 ";"                          {debug("SEMI      : %s\n",yytext);yylval=create_node("SEMI",SEMI,yylineno);return SEMI;} 
 ","                          {debug("COMMA     : %s\n",yytext);yylval=create_node("COMMA",COMMA,yylineno);return COMMA;}
 >=|<=|>|<|==|!=              {debug("RELOP     : %s\n",yytext);yylval=create_node("RELOP",RELOP,yylineno);return RELOP;}
@@ -66,5 +94,5 @@ letter  [_a-zA-Z]
 "else"                       {debug("ELSE      : %s\n",yytext);yylval=create_node("ELSE",ELSE,yylineno);return ELSE;}
 "while"                      {debug("WHILE     : %s\n",yytext);yylval=create_node("WHILE",WHILE,yylineno);return WHILE;}
 {letter}({digit}|{letter})*  {debug("ID        : %s\n",yytext);yylval=create_node("ID",ID,yylineno);yylval->s_val=malloc(sizeof(yytext));strcpy(yylval->s_val,yytext);return ID;}               //标识符：52个大写字母或小写字母、10个数字和一个下划线字符组成的字符串，不能数字开头,为了去除保留字，最后再匹配
-.                            {errorflag=1;printf("Error type A at Line %d: Mysterious characters \'%s\'\n",yylineno, yytext);}
+.                            {errorflag=1;printf("Error type A at Line %d: Mysterious characters \'%s\'\n",yylineno, yytext);}//如果不能符合上述正则说明有词法错误
 %%

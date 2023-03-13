@@ -2,7 +2,7 @@
 %{
     #define YYSTYPE Tnode*
     #include "N_tree.h"
-    #include "lex.yy.c"
+    #include "lex.yy.c"//为了能够使用Flex中的各种函数，需要在Bison源代码中引用lex.yy.c
     struct treenode *root=NULL;
     extern int errorflag;
     void yyerror(char *msg){
