@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 extern void yyrestart(FILE*);
-extern int yylex();
+extern int yylex();//调用yylex()进行词法分析
 extern int yyparse();
 extern struct treenode* root;
 extern void dfs(struct treenode* ,int);
@@ -14,8 +14,8 @@ int main(int argc, char** argv){
         perror(argv[1]);
         return 1;
     }
-    yyrestart(f);
-    yyparse();
+    yyrestart(f);//yyrestart(f)函数是Flex提供的库函数，它可以让Flex将其输入文件的文件指针yyin设置为f
+    yyparse();//对输入文件进行语法分析
     if(!errorflag){
         dfs(root,0);
     }
