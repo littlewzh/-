@@ -10,6 +10,7 @@ struct s2
 {
   //int a,float b;//如果这么写会因为缺失；而只报float错误，检测不到后面的错误??
 };
+k=1;
 int b = 151342;//error B:只能定义不能赋值
 int main(){
     /*
@@ -17,18 +18,20 @@ int main(){
     int i=1;
     int j=2;
     */
-    */    
-    int c = 4;
+     */;
+    int c == 048;
 }
 int inc()
 {
   int i;
   int i;
+  double j =2 ;
   int i2 = 0x3F;
   int i3 = 0777;
   int i4 = 0xG;
   int i6 = 0x;
   int i5 = 0888;
+  
   float f1 = 1.0;
   float f2 = 1.05e-4;
   float f3 = 1.05e;//error B：
@@ -37,14 +40,17 @@ int inc()
   f = f * i;
   i = f + 1; //虽然类型不对，但符合语法
     
-  //int k = 0123;//error B：语法只允许在程序开头定义变量，所以这里会出错，报错内容是int 语法错误？？
+  int k = 0123;//error B：语法只允许在程序开头定义变量，所以这里会出错，报错内容是int 语法错误？？
   k++++++1;
   k+++++;
 }
+int test(){
 
+}
 // zhushi
 /*
  zhushi /* 
+*/
 */
 int k == 1;
 /*
