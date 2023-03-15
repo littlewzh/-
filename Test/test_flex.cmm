@@ -18,6 +18,7 @@ int main(){
     int j=2;
     */
     */    
+    int c = 4;
 }
 int inc()
 {
@@ -26,15 +27,17 @@ int inc()
   int i2 = 0x3F;
   int i3 = 0777;
   int i4 = 0xG;
+  int i6 = 0x;
   int i5 = 0888;
   float f1 = 1.0;
   float f2 = 1.05e-4;
   float f3 = 1.05e;//error B：
+   k++++++1;
   i = i + 1; //虽然i没有数值，但符合语法
   f = f * i;
   i = f + 1; //虽然类型不对，但符合语法
-  int k = 0123;//error B：语法只允许在程序开头定义变量，所以这里会出错，报错内容是int 语法错误？？
-  @//error A
+    
+  //int k = 0123;//error B：语法只允许在程序开头定义变量，所以这里会出错，报错内容是int 语法错误？？
   k++++++1;
   k+++++;
 }
@@ -49,4 +52,6 @@ fuck1
 /*
 fuck2
 */
-*/
+int test(){
+
+}

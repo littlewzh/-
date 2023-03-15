@@ -12,6 +12,7 @@
       yylloc.last_column=yycolumn+yyleng-1; \
       yycolumn+=yyleng;
     int errorflag=0;
+	#define LOCAL_MACHINE 1
     #ifdef LOCAL_MACHINE
      #define debug(...) printf(__VA_ARGS__)
     #else
@@ -36,18 +37,23 @@ letter  [_a-zA-Z]
 0[0-7]+                      {debug("8INT      : %s\n",yytext);yylval=create_node("INT",INT,yylineno);char * p=yytext;
   p++;int tmp=0;
   while(*p!='\0'){tmp=tmp*8+*p-48;p++;}
-  yylval->i_val = tmp;return INT;}                                                 //8
+  yylval->i_val = tmp;return INT;
+}                                                 //8
 
-0(x|X)([0-9A-Fa-f])*         {debug("16INT     : %s\n",yytext);yylval=create_node("INT",INT,yylineno);char * p=yytext;
+0(x|X)([0-9A-Fa-f])+         {debug("16INT     : %s\n",yytext);yylval=create_node("INT",INT,yylineno);char * p=yytext;
   p+=2; int tmp = 0;
 	while (*p != '\0') {
 		if (*p >= '0' && *p <= '9')tmp = tmp * 16 + *p - '0';
 		if (*p >= 'A' && *p <= 'F')tmp = tmp * 16 + *p - 'A' + 10;
 		if (*p >= 'a' && *p <= 'f')tmp = tmp * 16 + *p - 'a' + 10;
 		p++;
-	}yylval->i_val = tmp;return INT;}               //16
-({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)?[-+]?{digit}*        {debug("FLOATE    : %s\n",yytext);yylval=create_node("FLOAT",FLOAT,yylineno);char * p=yytext;
-  float flans = 0;
+	}yylval->i_val = tmp;return INT;
+}               //16
+
+
+
+({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)?[-+]?{digit}+        {debug("FLOATE    : %s\n",yytext);yylval=create_node("FLOAT",FLOAT,yylineno);char * p=yytext;
+    float flans = 0;
 	int flstatus = 0,fltmp[3] = {0,0,0}, flwid1 = 0, flflag2 = 1;//三阶段分别解析数字：tmp0表示小数点前，1表示小数点后，2表示指数,wid1表示小数位数，flag2表示指数的正负
 	while (*p != '\0') {
 		switch (*p) {
@@ -64,11 +70,19 @@ letter  [_a-zA-Z]
 	}
 	flans = 1.0 * fltmp[0];//整数部分
 	float ftmp = 1.0 * fltmp[1];
-	while (flwid1--)ftmp *= 0.1;
+	while (flwid1--) ftmp/=10;
 	flans += ftmp;//基数部分
-	if (flflag2>0) while (fltmp[2]--)flans *= 10;
-	else  while (fltmp[2]--)flans *= 0.1;
-    yylval->f_val = flans;return FLOAT;}
+	if (flflag2>0){
+		while (fltmp[2]--)flans *= 10;
+	}else {
+		while (fltmp[2]--)flans /= 10;
+	}
+    yylval->f_val = flans;
+	return FLOAT;
+}
+
+
+
 ";"                          {debug("SEMI      : %s\n",yytext);yylval=create_node("SEMI",SEMI,yylineno);return SEMI;} 
 ","                          {debug("COMMA     : %s\n",yytext);yylval=create_node("COMMA",COMMA,yylineno);return COMMA;}
 >=|<=|>|<|==|!=              {debug("RELOP     : %s\n",yytext);yylval=create_node("RELOP",RELOP,yylineno);return RELOP;}
