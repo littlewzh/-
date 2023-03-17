@@ -28,15 +28,15 @@ Tnode *create_node(char *name,int type,int line){
 	new_node ->firstchild = NULL;
 	new_node ->nextbro = NULL;
 }
-void insert_node(Tnode *p,Tnode* new){
+void insert_node(Tnode *p,Tnode* newn){
 	assert(p!=NULL);
 	if(p->firstchild==NULL){
-		p->firstchild = new;
+		p->firstchild = newn;
 		return;
 	}else{
 		Tnode *cur = p->firstchild;
 		while(cur->nextbro!=NULL) cur = cur->nextbro;
-		cur->nextbro = new;
+		cur->nextbro = newn;
 		return;
 	}
 }

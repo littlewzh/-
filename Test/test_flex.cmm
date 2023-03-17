@@ -11,6 +11,8 @@ struct s2
   //int a,float b;//如果这么写会因为缺失；而只报float错误，检测不到后面的错误??
 };
 k=1;
+int j
+int i
 int b = 151342;//error B:只能定义不能赋值
 int main(){
     /*
@@ -18,14 +20,13 @@ int main(){
     int i=1;
     int j=2;
     */
-     */;
     int c == 048;
 }
 int inc()
 {
   int i;
   int i;
-  double j =2 ;
+  //double j =2 ; 
   int i2 = 0x3F;
   int i3 = 0777;
   int i4 = 0xG;
@@ -51,7 +52,7 @@ int test(){
 /*
  zhushi /* 
 */
-*/
+*/;
 int k == 1;
 /*
 fuck1
