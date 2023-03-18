@@ -7,6 +7,12 @@
     extern int errorflag;
     int yyerror(const char *msg);
     
+    
+    //#define LOCAL_MACHINE 1  //用于调试，使得输出flex调试信息
+    #ifdef LOCAL_MACHINE
+     #define debug(...) printf(__VA_ARGS__)
+    #else
+     #define debug(...) assert(1)
 %}
 %union{
     Tnode* node;
@@ -35,18 +41,27 @@
 %nonassoc ELSE
 
 %%
+//语法单元Program是初始语法单元，表示整个程序
 Program : ExtDefList                        {$$=create_node("Program",0,@$.first_line);Ninsert($$,1,$1);root=$$;}
     ;
+//每个Program可以产生一个ExtDefList，这里的ExtDefList表示零个或多个ExtDef
 ExtDefList :                                {$$=NULL;}
     | ExtDef ExtDefList                     {$$=create_node("ExtDefList",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
+
+//每个ExtDef表示一个全局变量、结构体或函数的定义
 ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Specifier SEMI                        {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,2,$1,$2);}
+//Specifier SEMI专门为结构体的定义而准备，也会允许出现“int;”
     | Specifier FunDec CompSt               {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
+//函数的定义：一定要有函数体
+//一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;} 
     | error SEMI                            {yyerrok;}
     | Specifier error                       {yyerrok;}
+    //| Specifier error CompSt                {yyerrok;}
     ;
+//ExtDecList表示零个或多个VarDec
 ExtDecList : VarDec                         {$$=create_node("ExtDecList",0,@$.first_line);Ninsert($$,1,$1);}
     | VarDec COMMA ExtDecList               {$$=create_node("ExtDecList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     ;
@@ -69,6 +84,8 @@ VarDec : ID                                 {$$=create_node("VarDec",0,@$.first_
     | VarDec LB INT RB                      {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | VarDec LB error RB                    {yyerrok;}//error
     ;
+
+//FunDec表示对一个函数头的定义：标识符+括号函数列表
 FunDec : ID LP VarList RP                   {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | ID LP RP                              {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | ID LP error RP                        {yyerrok;}    //error
@@ -76,10 +93,11 @@ FunDec : ID LP VarList RP                   {$$=create_node("FunDec",0,@$.first_
 VarList : ParamDec COMMA VarList            {$$=create_node("VarList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | ParamDec                              {$$=create_node("VarList",0,@$.first_line);Ninsert($$,1,$1);}
     ;
+//每个ParamDec都是对一个形参的定义
 ParamDec : Specifier VarDec                 {$$=create_node("ParamDec",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
 
-
+// CompSt表示一个由一对花括号括起来的语句块
 CompSt : LC DefList StmtList RC             {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | error RC                              {yyerrok;}//error
     ;
@@ -139,7 +157,11 @@ Args : Exp COMMA Args                       {$$=create_node("Args",0,@$.first_li
     | Exp                                   {$$=create_node("Args",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 %%
+int lastlineno=-1;//用于记录上一次报错的行数，使得一行只报错一次即可
 int yyerror(const char *msg){
        errorflag=1;
-       fprintf(stderr,"Error type B at line %d: %s ,unexpected %s\n",yylineno,msg,yytext);
+       if(yylineno!=lastlineno){//如果相等说明之前报错过了，直接忽略掉吧
+         lastlineno=yylineno;
+         fprintf(stderr,"Error type B at line %d: %s ：unexpected token %s\n",yylineno,msg,yytext);
+       }
 }

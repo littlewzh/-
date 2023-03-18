@@ -1,0 +1,118 @@
+//test 'A-1':
+int main () {
+  int i = 1.100;
+  float f = 1;
+  int j = i * f + 1.00.1;//
+}
+//test 'A-2':
+int f0o() {
+  return 0;
+}
+int main() {
+  int 1i = f0o();//
+}
+
+//test 'A-3':
+struct{
+  int x;
+  int y;
+  int z;
+} s1, s2;
+
+int foo() {
+  struct s int;//int
+}
+
+//test 'A-4':
+int i, j, k;
+int a[100];
+
+float f = 1.00;//=
+
+int hello() {
+  int a[100];
+}
+
+//test 'A-5':
+int foo() {
+  int i, j;
+  i = 0;
+  j = (i * 5 + 42) / 23;
+  float f;//不能后定义
+  return i;
+}
+
+//test 'A-6':
+struct Car {
+  int color;
+  float weight;
+};
+
+struct Fee {
+  Car car;//未知类型
+  int count;
+};
+
+int main() {
+  struct Car car;
+  car.color = 0;
+  car.weight = 1.111;
+}
+
+//test 'A-7':
+int a1[100];
+int a2[100];
+
+int init(int a[100]) {
+  int i;
+  while (i < 100) {
+    a[i] = i;
+    i = i + 1;
+  }
+}
+
+int add(int a[100], int b[100]) {
+  int i = 0;
+  int res[100];
+  while (i < 100) {
+    res[i] = a[i] + b[i];
+    i += 1;//没有这种语法
+  }
+}
+
+int main() {
+  init(a1);
+  init(a2);
+  add(a1, a2);
+}
+
+//test 'A-8':
+int Oops say() {//？？
+  struct Point {
+    int x;
+    int y;
+    int z;
+  } p1, p2;
+  return 0;
+}
+
+int;
+int;
+
+struct st {
+  int s1;
+  float s2;
+  struct st s3, s4;
+  int arr[10.0];
+};
+
+//test 'A-9':
+int turn;
+int flag[2];
+
+int doSth() {
+  int i = 0;
+  while (i < 42) {
+    i = i + 1;
+  }
+}

@@ -13,7 +13,7 @@
       yycolumn+=yyleng;
     int errorflag=0;
 
-	//#define LOCAL_MACHINE 1
+	//#define LOCAL_MACHINE 1  //用于调试，使得输出flex调试信息
     #ifdef LOCAL_MACHINE
      #define debug(...) printf(__VA_ARGS__)
     #else
