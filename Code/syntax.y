@@ -1,18 +1,17 @@
 %locations
 %{
-    //#define YYSTYPE Tnode*
     #include "N_tree.h"
     #include "lex.yy.c"//为了能够使用Flex中的各种函数，需要在Bison源代码中引用lex.yy.c
     struct treenode *root=NULL;
     extern int errorflag;
     int yyerror(const char *msg);
     
-    
-    //#define LOCAL_MACHINE 1  //用于调试，使得输出flex调试信息
+    //#define LOCAL_MACHINE 1  //用于调试，使得输出bison调试信息
     #ifdef LOCAL_MACHINE
      #define debug(...) printf(__VA_ARGS__)
     #else
      #define debug(...) assert(1)
+    #endif
 %}
 %union{
     Tnode* node;
@@ -51,10 +50,10 @@ ExtDefList :                                {$$=NULL;}
 
 //每个ExtDef表示一个全局变量、结构体或函数的定义
 ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
-    | Specifier SEMI                        {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,2,$1,$2);}
 //Specifier SEMI专门为结构体的定义而准备，也会允许出现“int;”
+    | Specifier SEMI                        {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,2,$1,$2);}
+//函数的定义：FunDec是函数头，一定要有函数体CompSt
     | Specifier FunDec CompSt               {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
-//函数的定义：一定要有函数体
 //一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;} 
     | error SEMI                            {yyerrok;}
@@ -66,9 +65,11 @@ ExtDecList : VarDec                         {$$=create_node("ExtDecList",0,@$.fi
     | VarDec COMMA ExtDecList               {$$=create_node("ExtDecList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     ;
 
+//Specifier是类型描述符，可以直接变成TYPE或者StructSpecifier结构体类型
 Specifier : TYPE                            {$$=create_node("Specifier",0,@$.first_line);Ninsert($$,1,$1);}
     | StructSpecifier                       {$$=create_node("Specifier",0,@$.first_line);Ninsert($$,1,$1);}
     ;
+//结构体类型，OptTag是结构体名可有可无（？），STRUCT Tag用来直接用之前定义的结构体
 StructSpecifier : STRUCT OptTag LC DefList RC       {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
     | STRUCT Tag                                    {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}
     | STRUCT OptTag LC error RC                     {yyerrok;}
@@ -79,7 +80,7 @@ OptTag :                                    {$$=NULL;}
 Tag : ID                                    {$$=create_node("Tag",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 
-
+//VarDec表示对一个变量的定义
 VarDec : ID                                 {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,1,$1);}
     | VarDec LB INT RB                      {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | VarDec LB error RB                    {yyerrok;}//error
@@ -90,6 +91,7 @@ FunDec : ID LP VarList RP                   {$$=create_node("FunDec",0,@$.first_
     | ID LP RP                              {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | ID LP error RP                        {yyerrok;}    //error
     ;
+//VarList 形参列表
 VarList : ParamDec COMMA VarList            {$$=create_node("VarList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | ParamDec                              {$$=create_node("VarList",0,@$.first_line);Ninsert($$,1,$1);}
     ;
@@ -97,13 +99,16 @@ VarList : ParamDec COMMA VarList            {$$=create_node("VarList",0,@$.first
 ParamDec : Specifier VarDec                 {$$=create_node("ParamDec",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
 
-// CompSt表示一个由一对花括号括起来的语句块
+// CompSt表示一个由一对花括号括起来的语句块：只能先定义再语句
 CompSt : LC DefList StmtList RC             {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | error RC                              {yyerrok;}//error
     ;
+
+//StmtList就是零个或多个Stmt的组合
 StmtList :                                  {$$=NULL;}
     | Stmt StmtList                         {$$=create_node("StmtList",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
+//每个Stmt都表示一条语句:分号表达式、一个语句块CompSt、RETURN语句、If、While、
 Stmt : Exp SEMI                             {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,2,$1,$2);}
     | CompSt                                {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,1,$1);}
     | RETURN Exp SEMI                       {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
@@ -118,22 +123,25 @@ Stmt : Exp SEMI                             {$$=create_node("Stmt",0,@$.first_li
     | error SEMI                                        {yyerrok;}//error
     ;
 
-
+//Local Definitions：与局部变量的定义有关：形式例如int a=1,b,c;
 DefList :                                   {$$=NULL;}     
     | Def DefList                           {$$=create_node("DefList",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
+//每个Def就是一条分号首尾的变量定义
 Def : Specifier DecList SEMI                {$$=create_node("Def",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Specifier error SEMI                  {yyerrok;}//error
     ;
+//允许逗号分割
 DecList : Dec                               {$$=create_node("DecList",0,@$.first_line);Ninsert($$,1,$1);}     
     | Dec COMMA DecList                     {$$=create_node("DecList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Dec error DecList                     {yyerrok;}
     ;
+//允许局部变量初始化
 Dec : VarDec                                {$$=create_node("Dec",0,@$.first_line);Ninsert($$,1,$1);}     
     | VarDec ASSIGNOP Exp                   {$$=create_node("Dec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     ;
 
-
+//Expressions这一部分的产生式主要与表达式有关：
 Exp : Exp ASSIGNOP Exp                      {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Exp AND Exp                           {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Exp OR Exp                            {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
@@ -157,6 +165,7 @@ Args : Exp COMMA Args                       {$$=create_node("Args",0,@$.first_li
     | Exp                                   {$$=create_node("Args",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 %%
+//
 int lastlineno=-1;//用于记录上一次报错的行数，使得一行只报错一次即可
 int yyerror(const char *msg){
        errorflag=1;

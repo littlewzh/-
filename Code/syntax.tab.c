@@ -77,13 +77,14 @@
     int yyerror(const char *msg);
     
     
-    //#define LOCAL_MACHINE 1  //用于调试，使得输出flex调试信息
+    //#define LOCAL_MACHINE 1  //用于调试，使得输出bison调试信息
     #ifdef LOCAL_MACHINE
      #define debug(...) printf(__VA_ARGS__)
     #else
      #define debug(...) assert(1)
+    #endif
 
-#line 87 "./syntax.tab.c"
+#line 88 "./syntax.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -555,14 +556,14 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    45,    45,    48,    49,    53,    54,    56,    59,    60,
-      61,    65,    66,    69,    70,    72,    73,    74,    76,    77,
-      79,    83,    84,    85,    89,    90,    91,    93,    94,    97,
-     101,   102,   104,   105,   107,   108,   109,   110,   111,   112,
-     113,   114,   115,   116,   117,   118,   122,   123,   125,   126,
-     128,   129,   130,   132,   133,   137,   138,   139,   140,   141,
-     142,   143,   144,   145,   146,   147,   148,   149,   150,   151,
-     152,   153,   154,   156,   157
+       0,    46,    46,    49,    50,    54,    56,    58,    60,    61,
+      62,    66,    67,    71,    72,    75,    76,    77,    79,    80,
+      82,    86,    87,    88,    92,    93,    94,    97,    98,   101,
+     105,   106,   110,   111,   114,   115,   116,   117,   118,   119,
+     120,   121,   122,   123,   124,   125,   129,   130,   133,   134,
+     137,   138,   139,   142,   143,   147,   148,   149,   150,   151,
+     152,   153,   154,   155,   156,   157,   158,   159,   160,   161,
+     162,   163,   164,   166,   167
 };
 #endif
 
@@ -1357,445 +1358,445 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* Program: ExtDefList  */
-#line 45 "./syntax.y"
+#line 46 "./syntax.y"
                                             {(yyval.node)=create_node("Program",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));root=(yyval.node);}
-#line 1363 "./syntax.tab.c"
+#line 1364 "./syntax.tab.c"
     break;
 
   case 3: /* ExtDefList: %empty  */
-#line 48 "./syntax.y"
+#line 49 "./syntax.y"
                                             {(yyval.node)=NULL;}
-#line 1369 "./syntax.tab.c"
+#line 1370 "./syntax.tab.c"
     break;
 
   case 4: /* ExtDefList: ExtDef ExtDefList  */
-#line 49 "./syntax.y"
+#line 50 "./syntax.y"
                                             {(yyval.node)=create_node("ExtDefList",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1375 "./syntax.tab.c"
+#line 1376 "./syntax.tab.c"
     break;
 
   case 5: /* ExtDef: Specifier ExtDecList SEMI  */
-#line 53 "./syntax.y"
+#line 54 "./syntax.y"
                                             {(yyval.node)=create_node("ExtDef",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1381 "./syntax.tab.c"
+#line 1382 "./syntax.tab.c"
     break;
 
   case 6: /* ExtDef: Specifier SEMI  */
-#line 54 "./syntax.y"
+#line 56 "./syntax.y"
                                             {(yyval.node)=create_node("ExtDef",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1387 "./syntax.tab.c"
+#line 1388 "./syntax.tab.c"
     break;
 
   case 7: /* ExtDef: Specifier FunDec CompSt  */
-#line 56 "./syntax.y"
+#line 58 "./syntax.y"
                                             {(yyval.node)=create_node("ExtDef",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1393 "./syntax.tab.c"
+#line 1394 "./syntax.tab.c"
     break;
 
   case 8: /* ExtDef: Specifier error SEMI  */
-#line 59 "./syntax.y"
+#line 60 "./syntax.y"
                                             {yyerrok;}
-#line 1399 "./syntax.tab.c"
+#line 1400 "./syntax.tab.c"
     break;
 
   case 9: /* ExtDef: error SEMI  */
-#line 60 "./syntax.y"
+#line 61 "./syntax.y"
                                             {yyerrok;}
-#line 1405 "./syntax.tab.c"
+#line 1406 "./syntax.tab.c"
     break;
 
   case 10: /* ExtDef: Specifier error  */
-#line 61 "./syntax.y"
+#line 62 "./syntax.y"
                                             {yyerrok;}
-#line 1411 "./syntax.tab.c"
+#line 1412 "./syntax.tab.c"
     break;
 
   case 11: /* ExtDecList: VarDec  */
-#line 65 "./syntax.y"
+#line 66 "./syntax.y"
                                             {(yyval.node)=create_node("ExtDecList",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1417 "./syntax.tab.c"
+#line 1418 "./syntax.tab.c"
     break;
 
   case 12: /* ExtDecList: VarDec COMMA ExtDecList  */
-#line 66 "./syntax.y"
+#line 67 "./syntax.y"
                                             {(yyval.node)=create_node("ExtDecList",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1423 "./syntax.tab.c"
+#line 1424 "./syntax.tab.c"
     break;
 
   case 13: /* Specifier: TYPE  */
-#line 69 "./syntax.y"
+#line 71 "./syntax.y"
                                             {(yyval.node)=create_node("Specifier",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1429 "./syntax.tab.c"
+#line 1430 "./syntax.tab.c"
     break;
 
   case 14: /* Specifier: StructSpecifier  */
-#line 70 "./syntax.y"
+#line 72 "./syntax.y"
                                             {(yyval.node)=create_node("Specifier",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1435 "./syntax.tab.c"
+#line 1436 "./syntax.tab.c"
     break;
 
   case 15: /* StructSpecifier: STRUCT OptTag LC DefList RC  */
-#line 72 "./syntax.y"
+#line 75 "./syntax.y"
                                                     {(yyval.node)=create_node("StructSpecifier",0,(yyloc).first_line);Ninsert((yyval.node),5,(yyvsp[-4].node),(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1441 "./syntax.tab.c"
+#line 1442 "./syntax.tab.c"
     break;
 
   case 16: /* StructSpecifier: STRUCT Tag  */
-#line 73 "./syntax.y"
+#line 76 "./syntax.y"
                                                     {(yyval.node)=create_node("StructSpecifier",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1447 "./syntax.tab.c"
+#line 1448 "./syntax.tab.c"
     break;
 
   case 17: /* StructSpecifier: STRUCT OptTag LC error RC  */
-#line 74 "./syntax.y"
+#line 77 "./syntax.y"
                                                     {yyerrok;}
-#line 1453 "./syntax.tab.c"
+#line 1454 "./syntax.tab.c"
     break;
 
   case 18: /* OptTag: %empty  */
-#line 76 "./syntax.y"
+#line 79 "./syntax.y"
                                             {(yyval.node)=NULL;}
-#line 1459 "./syntax.tab.c"
+#line 1460 "./syntax.tab.c"
     break;
 
   case 19: /* OptTag: ID  */
-#line 77 "./syntax.y"
+#line 80 "./syntax.y"
                                             {(yyval.node)=create_node("OptTag",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1465 "./syntax.tab.c"
+#line 1466 "./syntax.tab.c"
     break;
 
   case 20: /* Tag: ID  */
-#line 79 "./syntax.y"
+#line 82 "./syntax.y"
                                             {(yyval.node)=create_node("Tag",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1471 "./syntax.tab.c"
+#line 1472 "./syntax.tab.c"
     break;
 
   case 21: /* VarDec: ID  */
-#line 83 "./syntax.y"
+#line 86 "./syntax.y"
                                             {(yyval.node)=create_node("VarDec",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1477 "./syntax.tab.c"
+#line 1478 "./syntax.tab.c"
     break;
 
   case 22: /* VarDec: VarDec LB INT RB  */
-#line 84 "./syntax.y"
+#line 87 "./syntax.y"
                                             {(yyval.node)=create_node("VarDec",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1483 "./syntax.tab.c"
+#line 1484 "./syntax.tab.c"
     break;
 
   case 23: /* VarDec: VarDec LB error RB  */
-#line 85 "./syntax.y"
+#line 88 "./syntax.y"
                                             {yyerrok;}
-#line 1489 "./syntax.tab.c"
+#line 1490 "./syntax.tab.c"
     break;
 
   case 24: /* FunDec: ID LP VarList RP  */
-#line 89 "./syntax.y"
+#line 92 "./syntax.y"
                                             {(yyval.node)=create_node("FunDec",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1495 "./syntax.tab.c"
+#line 1496 "./syntax.tab.c"
     break;
 
   case 25: /* FunDec: ID LP RP  */
-#line 90 "./syntax.y"
+#line 93 "./syntax.y"
                                             {(yyval.node)=create_node("FunDec",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1501 "./syntax.tab.c"
+#line 1502 "./syntax.tab.c"
     break;
 
   case 26: /* FunDec: ID LP error RP  */
-#line 91 "./syntax.y"
+#line 94 "./syntax.y"
                                             {yyerrok;}
-#line 1507 "./syntax.tab.c"
+#line 1508 "./syntax.tab.c"
     break;
 
   case 27: /* VarList: ParamDec COMMA VarList  */
-#line 93 "./syntax.y"
+#line 97 "./syntax.y"
                                             {(yyval.node)=create_node("VarList",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1513 "./syntax.tab.c"
+#line 1514 "./syntax.tab.c"
     break;
 
   case 28: /* VarList: ParamDec  */
-#line 94 "./syntax.y"
+#line 98 "./syntax.y"
                                             {(yyval.node)=create_node("VarList",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1519 "./syntax.tab.c"
+#line 1520 "./syntax.tab.c"
     break;
 
   case 29: /* ParamDec: Specifier VarDec  */
-#line 97 "./syntax.y"
+#line 101 "./syntax.y"
                                             {(yyval.node)=create_node("ParamDec",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1525 "./syntax.tab.c"
+#line 1526 "./syntax.tab.c"
     break;
 
   case 30: /* CompSt: LC DefList StmtList RC  */
-#line 101 "./syntax.y"
+#line 105 "./syntax.y"
                                             {(yyval.node)=create_node("CompSt",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1531 "./syntax.tab.c"
+#line 1532 "./syntax.tab.c"
     break;
 
   case 31: /* CompSt: error RC  */
-#line 102 "./syntax.y"
+#line 106 "./syntax.y"
                                             {yyerrok;}
-#line 1537 "./syntax.tab.c"
+#line 1538 "./syntax.tab.c"
     break;
 
   case 32: /* StmtList: %empty  */
-#line 104 "./syntax.y"
+#line 110 "./syntax.y"
                                             {(yyval.node)=NULL;}
-#line 1543 "./syntax.tab.c"
+#line 1544 "./syntax.tab.c"
     break;
 
   case 33: /* StmtList: Stmt StmtList  */
-#line 105 "./syntax.y"
+#line 111 "./syntax.y"
                                             {(yyval.node)=create_node("StmtList",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1549 "./syntax.tab.c"
+#line 1550 "./syntax.tab.c"
     break;
 
   case 34: /* Stmt: Exp SEMI  */
-#line 107 "./syntax.y"
+#line 114 "./syntax.y"
                                             {(yyval.node)=create_node("Stmt",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1555 "./syntax.tab.c"
+#line 1556 "./syntax.tab.c"
     break;
 
   case 35: /* Stmt: CompSt  */
-#line 108 "./syntax.y"
+#line 115 "./syntax.y"
                                             {(yyval.node)=create_node("Stmt",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1561 "./syntax.tab.c"
+#line 1562 "./syntax.tab.c"
     break;
 
   case 36: /* Stmt: RETURN Exp SEMI  */
-#line 109 "./syntax.y"
+#line 116 "./syntax.y"
                                             {(yyval.node)=create_node("Stmt",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1567 "./syntax.tab.c"
+#line 1568 "./syntax.tab.c"
     break;
 
   case 37: /* Stmt: IF LP Exp RP Stmt  */
-#line 110 "./syntax.y"
+#line 117 "./syntax.y"
                                                         {(yyval.node)=create_node("Stmt",0,(yyloc).first_line);Ninsert((yyval.node),5,(yyvsp[-4].node),(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1573 "./syntax.tab.c"
+#line 1574 "./syntax.tab.c"
     break;
 
   case 38: /* Stmt: IF LP Exp RP Stmt ELSE Stmt  */
-#line 111 "./syntax.y"
+#line 118 "./syntax.y"
                                                         {(yyval.node)=create_node("Stmt",0,(yyloc).first_line);Ninsert((yyval.node),7,(yyvsp[-6].node),(yyvsp[-5].node),(yyvsp[-4].node),(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1579 "./syntax.tab.c"
+#line 1580 "./syntax.tab.c"
     break;
 
   case 39: /* Stmt: WHILE LP Exp RP Stmt  */
-#line 112 "./syntax.y"
+#line 119 "./syntax.y"
                                                         {(yyval.node)=create_node("Stmt",0,(yyloc).first_line);Ninsert((yyval.node),5,(yyvsp[-4].node),(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1585 "./syntax.tab.c"
+#line 1586 "./syntax.tab.c"
     break;
 
   case 40: /* Stmt: IF LP error RP Stmt  */
-#line 113 "./syntax.y"
+#line 120 "./syntax.y"
                                                         {yyerrok;}
-#line 1591 "./syntax.tab.c"
+#line 1592 "./syntax.tab.c"
     break;
 
   case 41: /* Stmt: IF LP Exp RP error ELSE Stmt  */
-#line 114 "./syntax.y"
+#line 121 "./syntax.y"
                                                         {yyerrok;}
-#line 1597 "./syntax.tab.c"
+#line 1598 "./syntax.tab.c"
     break;
 
   case 42: /* Stmt: WHILE LP error RP Stmt  */
-#line 115 "./syntax.y"
+#line 122 "./syntax.y"
                                                         {yyerrok;}
-#line 1603 "./syntax.tab.c"
+#line 1604 "./syntax.tab.c"
     break;
 
   case 43: /* Stmt: Exp error  */
-#line 116 "./syntax.y"
+#line 123 "./syntax.y"
                                                         {}
-#line 1609 "./syntax.tab.c"
+#line 1610 "./syntax.tab.c"
     break;
 
   case 44: /* Stmt: RETURN error  */
-#line 117 "./syntax.y"
+#line 124 "./syntax.y"
                                                         {yyerrok;}
-#line 1615 "./syntax.tab.c"
+#line 1616 "./syntax.tab.c"
     break;
 
   case 45: /* Stmt: error SEMI  */
-#line 118 "./syntax.y"
+#line 125 "./syntax.y"
                                                         {yyerrok;}
-#line 1621 "./syntax.tab.c"
+#line 1622 "./syntax.tab.c"
     break;
 
   case 46: /* DefList: %empty  */
-#line 122 "./syntax.y"
+#line 129 "./syntax.y"
                                             {(yyval.node)=NULL;}
-#line 1627 "./syntax.tab.c"
+#line 1628 "./syntax.tab.c"
     break;
 
   case 47: /* DefList: Def DefList  */
-#line 123 "./syntax.y"
+#line 130 "./syntax.y"
                                             {(yyval.node)=create_node("DefList",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1633 "./syntax.tab.c"
+#line 1634 "./syntax.tab.c"
     break;
 
   case 48: /* Def: Specifier DecList SEMI  */
-#line 125 "./syntax.y"
+#line 133 "./syntax.y"
                                             {(yyval.node)=create_node("Def",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1639 "./syntax.tab.c"
+#line 1640 "./syntax.tab.c"
     break;
 
   case 49: /* Def: Specifier error SEMI  */
-#line 126 "./syntax.y"
+#line 134 "./syntax.y"
                                             {yyerrok;}
-#line 1645 "./syntax.tab.c"
+#line 1646 "./syntax.tab.c"
     break;
 
   case 50: /* DecList: Dec  */
-#line 128 "./syntax.y"
+#line 137 "./syntax.y"
                                             {(yyval.node)=create_node("DecList",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1651 "./syntax.tab.c"
+#line 1652 "./syntax.tab.c"
     break;
 
   case 51: /* DecList: Dec COMMA DecList  */
-#line 129 "./syntax.y"
+#line 138 "./syntax.y"
                                             {(yyval.node)=create_node("DecList",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1657 "./syntax.tab.c"
+#line 1658 "./syntax.tab.c"
     break;
 
   case 52: /* DecList: Dec error DecList  */
-#line 130 "./syntax.y"
+#line 139 "./syntax.y"
                                             {yyerrok;}
-#line 1663 "./syntax.tab.c"
+#line 1664 "./syntax.tab.c"
     break;
 
   case 53: /* Dec: VarDec  */
-#line 132 "./syntax.y"
+#line 142 "./syntax.y"
                                             {(yyval.node)=create_node("Dec",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1669 "./syntax.tab.c"
+#line 1670 "./syntax.tab.c"
     break;
 
   case 54: /* Dec: VarDec ASSIGNOP Exp  */
-#line 133 "./syntax.y"
+#line 143 "./syntax.y"
                                             {(yyval.node)=create_node("Dec",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1675 "./syntax.tab.c"
+#line 1676 "./syntax.tab.c"
     break;
 
   case 55: /* Exp: Exp ASSIGNOP Exp  */
-#line 137 "./syntax.y"
+#line 147 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1681 "./syntax.tab.c"
+#line 1682 "./syntax.tab.c"
     break;
 
   case 56: /* Exp: Exp AND Exp  */
-#line 138 "./syntax.y"
+#line 148 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1687 "./syntax.tab.c"
+#line 1688 "./syntax.tab.c"
     break;
 
   case 57: /* Exp: Exp OR Exp  */
-#line 139 "./syntax.y"
+#line 149 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1693 "./syntax.tab.c"
+#line 1694 "./syntax.tab.c"
     break;
 
   case 58: /* Exp: Exp RELOP Exp  */
-#line 140 "./syntax.y"
+#line 150 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1699 "./syntax.tab.c"
+#line 1700 "./syntax.tab.c"
     break;
 
   case 59: /* Exp: Exp PLUS Exp  */
-#line 141 "./syntax.y"
+#line 151 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1705 "./syntax.tab.c"
+#line 1706 "./syntax.tab.c"
     break;
 
   case 60: /* Exp: Exp MINUS Exp  */
-#line 142 "./syntax.y"
+#line 152 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1711 "./syntax.tab.c"
+#line 1712 "./syntax.tab.c"
     break;
 
   case 61: /* Exp: Exp STAR Exp  */
-#line 143 "./syntax.y"
+#line 153 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1717 "./syntax.tab.c"
+#line 1718 "./syntax.tab.c"
     break;
 
   case 62: /* Exp: Exp DIV Exp  */
-#line 144 "./syntax.y"
+#line 154 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1723 "./syntax.tab.c"
+#line 1724 "./syntax.tab.c"
     break;
 
   case 63: /* Exp: LP Exp RP  */
-#line 145 "./syntax.y"
+#line 155 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1729 "./syntax.tab.c"
+#line 1730 "./syntax.tab.c"
     break;
 
   case 64: /* Exp: MINUS Exp  */
-#line 146 "./syntax.y"
+#line 156 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1735 "./syntax.tab.c"
+#line 1736 "./syntax.tab.c"
     break;
 
   case 65: /* Exp: NOT Exp  */
-#line 147 "./syntax.y"
+#line 157 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1741 "./syntax.tab.c"
+#line 1742 "./syntax.tab.c"
     break;
 
   case 66: /* Exp: ID LP Args RP  */
-#line 148 "./syntax.y"
+#line 158 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1747 "./syntax.tab.c"
+#line 1748 "./syntax.tab.c"
     break;
 
   case 67: /* Exp: ID LP RP  */
-#line 149 "./syntax.y"
+#line 159 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1753 "./syntax.tab.c"
+#line 1754 "./syntax.tab.c"
     break;
 
   case 68: /* Exp: Exp LB Exp RB  */
-#line 150 "./syntax.y"
+#line 160 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1759 "./syntax.tab.c"
+#line 1760 "./syntax.tab.c"
     break;
 
   case 69: /* Exp: Exp DOT ID  */
-#line 151 "./syntax.y"
+#line 161 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1765 "./syntax.tab.c"
+#line 1766 "./syntax.tab.c"
     break;
 
   case 70: /* Exp: ID  */
-#line 152 "./syntax.y"
+#line 162 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1771 "./syntax.tab.c"
+#line 1772 "./syntax.tab.c"
     break;
 
   case 71: /* Exp: INT  */
-#line 153 "./syntax.y"
+#line 163 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1777 "./syntax.tab.c"
+#line 1778 "./syntax.tab.c"
     break;
 
   case 72: /* Exp: FLOAT  */
-#line 154 "./syntax.y"
+#line 164 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1783 "./syntax.tab.c"
+#line 1784 "./syntax.tab.c"
     break;
 
   case 73: /* Args: Exp COMMA Args  */
-#line 156 "./syntax.y"
+#line 166 "./syntax.y"
                                             {(yyval.node)=create_node("Args",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
-#line 1789 "./syntax.tab.c"
+#line 1790 "./syntax.tab.c"
     break;
 
   case 74: /* Args: Exp  */
-#line 157 "./syntax.y"
+#line 167 "./syntax.y"
                                             {(yyval.node)=create_node("Args",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
-#line 1795 "./syntax.tab.c"
+#line 1796 "./syntax.tab.c"
     break;
 
 
-#line 1799 "./syntax.tab.c"
+#line 1800 "./syntax.tab.c"
 
       default: break;
     }
@@ -1993,8 +1994,9 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 159 "./syntax.y"
+#line 169 "./syntax.y"
 
+//
 int lastlineno=-1;//用于记录上一次报错的行数，使得一行只报错一次即可
 int yyerror(const char *msg){
        errorflag=1;
