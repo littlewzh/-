@@ -27,8 +27,8 @@ lexical: $(LFILE)
 	$(FLEX) -o $(LFC) $(LFILE)
 
 syntax-c: $(YFILE)
-	$(BISON) -o $(YFC) -d -v $(YFILE)
-
+	$(BISON) -o $(YFC) -d -t -v $(YFILE)
+#bison的-v用于生成.output文件对个.output文件，-t诊断模式将当前状态的信息打印到标准输出
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标

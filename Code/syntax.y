@@ -5,13 +5,8 @@
     struct treenode *root=NULL;
     extern int errorflag;
     int yyerror(const char *msg);
-    
-    //#define LOCAL_MACHINE 1  //用于调试，使得输出bison调试信息
-    #ifdef LOCAL_MACHINE
-     #define debug(...) printf(__VA_ARGS__)
-    #else
-     #define debug(...) assert(1)
-    #endif
+
+    //#define YYDEBUG 1 //用于调试，使得输出bison调试信息
 %}
 %union{
     Tnode* node;
@@ -55,10 +50,10 @@ ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_
 //函数的定义：FunDec是函数头，一定要有函数体CompSt
     | Specifier FunDec CompSt               {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
 //一些可能的错误：全局
-    | Specifier error SEMI                  {yyerrok;} 
+    | Specifier error SEMI                  {yyerrok;}//下一条有了这个可以去掉吗 
     | error SEMI                            {yyerrok;}
-    | Specifier error                       {yyerrok;}
-    //| Specifier error CompSt                {yyerrok;}
+    | Specifier error                       {yyerrok;}//全局变量没逗号
+    | error FunDec CompSt                   {yyerrok;}//函数类型不对
     ;
 //ExtDecList表示零个或多个VarDec
 ExtDecList : VarDec                         {$$=create_node("ExtDecList",0,@$.first_line);Ninsert($$,1,$1);}
@@ -70,6 +65,7 @@ Specifier : TYPE                            {$$=create_node("Specifier",0,@$.fir
     | StructSpecifier                       {$$=create_node("Specifier",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 //结构体类型，OptTag是结构体名可有可无（？），STRUCT Tag用来直接用之前定义的结构体
+//最基本的结构体形式是例如struct Complex { int real, image; }，DefList可以空如果定义过后就可以直接用struct Complex a, b;也就是第二种形式
 StructSpecifier : STRUCT OptTag LC DefList RC       {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
     | STRUCT Tag                                    {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}
     | STRUCT OptTag LC error RC                     {yyerrok;}
@@ -102,6 +98,7 @@ ParamDec : Specifier VarDec                 {$$=create_node("ParamDec",0,@$.firs
 // CompSt表示一个由一对花括号括起来的语句块：只能先定义再语句
 CompSt : LC DefList StmtList RC             {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | error RC                              {yyerrok;}//error
+    //| LC DefList error                              {yyerrok;}//error
     ;
 
 //StmtList就是零个或多个Stmt的组合
@@ -153,6 +150,7 @@ Exp : Exp ASSIGNOP Exp                      {$$=create_node("Exp",0,@$.first_lin
     | LP Exp RP                             {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | MINUS Exp                             {$$=create_node("Exp",0,@$.first_line);Ninsert($$,2,$1,$2);}
     | NOT Exp                               {$$=create_node("Exp",0,@$.first_line);Ninsert($$,2,$1,$2);}
+//函数调用：
     | ID LP Args RP                         {$$=create_node("Exp",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | ID LP RP                              {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Exp LB Exp RB                         {$$=create_node("Exp",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
@@ -169,7 +167,7 @@ Args : Exp COMMA Args                       {$$=create_node("Args",0,@$.first_li
 int lastlineno=-1;//用于记录上一次报错的行数，使得一行只报错一次即可
 int yyerror(const char *msg){
        errorflag=1;
-       if(yylineno!=lastlineno){//如果相等说明之前报错过了，直接忽略掉吧
+       if(yylineno!=lastlineno){//如果相等说明之前报错过了，就不打印
          lastlineno=yylineno;
          fprintf(stderr,"Error type B at line %d: %s ：unexpected token %s\n",yylineno,msg,yytext);
        }
