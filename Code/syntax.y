@@ -58,7 +58,7 @@ ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_
 //一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;}//下一条有了这个可以去掉吗 
     | error SEMI                            {yyerrok;}
-    | Specifier error                       {yyerrok;}//全局变量没分号的错误
+    | Specifier error                       {yyerrok;}//全局变量没分号的错误                       ???????
     | error FunDec CompSt                   {bdebug("error FunDec CompSt \n");yyerrok;}//函数类型不对的错误
     ;
 
@@ -73,51 +73,53 @@ Specifier : TYPE                            {$$=create_node("Specifier",0,@$.fir
     ;
 //结构体类型，OptTag是结构体名可有可无（？），STRUCT Tag用来直接用之前定义的结构体
 //最基本的结构体形式是例如struct Complex { int real, image; }，DefList可以空如果定义过后就可以直接用struct Complex a, b;也就是第二种形式
-StructSpecifier : STRUCT OptTag LC DefList RC       {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
-    | STRUCT Tag                                    {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}    
-    | STRUCT OptTag LC error RC                     {yyerrok;}//结构体定义的内部错误
-    | STRUCT error                          {yyerrok;} //struct后面跟着的所有可能错误
+
+
+StructSpecifier : STRUCT OptTag LC DefList RC           {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
+    | STRUCT Tag                                        {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}    
+    | STRUCT OptTag LC error RC                         {yyerrok;}//结构体定义的内部错误
+    | STRUCT error                                      {yyerrok;} //struct后面跟着的所有可能错误              ??????
     ;
-OptTag :                                    {$$=NULL;}  
-    | ID                                    {$$=create_node("OptTag",0,@$.first_line);Ninsert($$,1,$1);}
+OptTag :                                                {$$=NULL;}  
+    | ID                                                {$$=create_node("OptTag",0,@$.first_line);Ninsert($$,1,$1);}
     ;
-Tag : ID                                    {$$=create_node("Tag",0,@$.first_line);Ninsert($$,1,$1);}
+Tag : ID                                                {$$=create_node("Tag",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 
 //VarDec表示对一个变量的定义
-VarDec : ID                                 {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,1,$1);}
-    | VarDec LB INT RB                      {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
-    | VarDec LB error RB                    {yyerrok;}
+VarDec : ID                                             {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,1,$1);}
+    | VarDec LB INT RB                                  {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
+    | VarDec LB error RB                                {yyerrok;}
     ;
 
 //FunDec表示对一个函数头的定义：标识符+括号函数列表
-FunDec : ID LP VarList RP                   {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
-    | ID LP RP                              {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
-    | ID LP error RP                        {yyerrok;}    
-    | ID LP error                           {yyerrok;}    
+FunDec : ID LP VarList RP                               {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
+    | ID LP RP                                          {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
+    | ID LP error RP                                    {yyerrok;}    
+    | ID LP error                                       {yyerrok;}    
     ;
 //VarList 形参列表
-VarList : ParamDec COMMA VarList            {$$=create_node("VarList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
-    | ParamDec                              {$$=create_node("VarList",0,@$.first_line);Ninsert($$,1,$1);}
+VarList : ParamDec COMMA VarList                        {$$=create_node("VarList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
+    | ParamDec                                          {$$=create_node("VarList",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 //每个ParamDec都是对一个形参的定义
-ParamDec : Specifier VarDec                 {$$=create_node("ParamDec",0,@$.first_line);Ninsert($$,2,$1,$2);}
+ParamDec : Specifier VarDec                             {$$=create_node("ParamDec",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
 
 // CompSt表示一个由一对花括号括起来的语句块：只能先定义再语句
-CompSt : LC DefList StmtList RC             {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
-    | error RC                              {yyerrok;}//右括号前的错误
-    //| LC DefList error                    {yyerrok;}//不能写，会冲突
+CompSt : LC DefList StmtList RC                         {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
+    | error RC                                          {yyerrok;}//右括号前的错误
+    //| LC DefList error                                {yyerrok;}//不能写，会冲突
     ;
 
 //StmtList就是零个或多个Stmt的组合
-StmtList :                                  {$$=NULL;}
-    | Stmt StmtList                         {$$=create_node("StmtList",0,@$.first_line);Ninsert($$,2,$1,$2);}
+StmtList :                                              {$$=NULL;}
+    | Stmt StmtList                                     {$$=create_node("StmtList",0,@$.first_line);Ninsert($$,2,$1,$2);}
     ;
 //每个Stmt都表示一条语句:分号表达式、一个语句块CompSt、RETURN语句、If、While、
-Stmt : Exp SEMI                             {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,2,$1,$2);}
-    | CompSt                                {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,1,$1);}
-    | RETURN Exp SEMI                       {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
+Stmt : Exp SEMI                                         {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,2,$1,$2);}
+    | CompSt                                            {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,1,$1);}
+    | RETURN Exp SEMI                                   {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | IF LP Exp RP Stmt        %prec LOWER_THAT_ELSE    {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
     | IF LP Exp RP Stmt ELSE Stmt                       {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,7,$1,$2,$3,$4,$5,$6,$7);}
     | WHILE LP Exp RP Stmt                              {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
@@ -128,7 +130,7 @@ Stmt : Exp SEMI                             {$$=create_node("Stmt",0,@$.first_li
     | Exp error                                         {yyerrok;}
     | RETURN error                                      {yyerrok;}
     | error SEMI                                        {yyerrok;}
-    | error LP Exp RP Stmt                              {yyerrok;}
+    | error LP Exp RP Stmt                              {yyerrok;}         // ??????
     ;
 
 //Local Definitions：与局部变量的定义有关：形式例如int a=1,b,c;
@@ -138,8 +140,7 @@ DefList :                                   {$$=NULL;}
 //每个Def就是一条分号首尾的变量定义
 Def : Specifier DecList SEMI                {$$=create_node("Def",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Specifier error SEMI                  {yyerrok;}
-    | Specifier error                       {yyerrok;}  
-    //| Specifier DecList error                   {yyerrok;}//不能加，会冲突！
+    | Specifier error                       {yyerrok;}     // ?????????
     ;
 //允许逗号分割
 DecList : Dec                               {$$=create_node("DecList",0,@$.first_line);Ninsert($$,1,$1);}     
@@ -171,7 +172,7 @@ Exp : Exp ASSIGNOP Exp                      {$$=create_node("Exp",0,@$.first_lin
     | INT                                   {$$=create_node("Exp",0,@$.first_line);Ninsert($$,1,$1);}
     | FLOAT                                 {$$=create_node("Exp",0,@$.first_line);Ninsert($$,1,$1);}
     ;
-//错误：
+//错误：???????????????
     | Exp ASSIGNOP error                    {yyerrok;}
     | Exp AND error                         {yyerrok;}
     | Exp OR error                          {yyerrok;}
@@ -195,6 +196,6 @@ int yyerror(const char *msg){
        errorflag=1;
        if(!onelineflag||yylineno!=lastlineno){//如果相等说明之前报错过了，就不打印
          lastlineno=yylineno;
-         fprintf(stderr,"Error type B at line %d: %s ：unexpected token %s\n",yylineno,msg,yytext);
+         fprintf(stderr,"Error type B at line %d: %s :unexpected token %s\n",yylineno,msg,yytext);
        }
 }
