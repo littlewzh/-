@@ -2,7 +2,7 @@
 int main () {
   int i = 1.100;
   float f = 1;
-  int j = i * f + 1.00.1;//多个1
+  int j = i * f + 1.00.1;          //多个1
 }
 
 //test 'A-2':
@@ -10,7 +10,7 @@ int f0o() {
   return 0;
 }
 int main() {
-  int 1i = f0o();//不能数字开头
+  int 1i = f0o();                   //不能数字开头
 }
 
 //test 'A-3':
@@ -21,14 +21,14 @@ struct{
 } s1, s2;
 
 int foo() {
-  struct s int;//多个int
+  struct s int;                      //多个int
 }
 
 //test 'A-4':
 int i, j, k;
 int a[100];
 
-float f = 1.00;//不能全局赋值
+float f = 1.00;                      //不能全局赋值
 
 int hello() {
   int a[100];
@@ -39,7 +39,7 @@ int foo() {
   int i, j;
   i = 0;
   j = (i * 5 + 42) / 23;
-  float f;//不能后定义
+  float f;                          //不能后定义
   return i;
 }
 
@@ -50,7 +50,7 @@ struct Car {
 };
 
 struct Fee {
-  Car car;//未知类型
+  Car car;                           //未知类型
   int count;
 };
 
@@ -77,7 +77,7 @@ int add(int a[100], int b[100]) {
   int res[100];
   while (i < 100) {
     res[i] = a[i] + b[i];
-    i += 1;//没有这种语法
+    i += 1;                       //没有这种语法
   }
 }
 
@@ -88,7 +88,7 @@ int main() {
 }
 
 //test 'A-8':
-Oops say() {//函数类型错误？？
+Oops say() {                      //函数类型错误
   struct Point {
     int x;
     int y;
@@ -104,7 +104,7 @@ struct st {
   int s1;
   float s2;
   struct st s3, s4;
-  int arr[10.0];//10.0不能识别
+  int arr[10.0];                     //10.0不能识别
 };
 
 //test 'A-9':
@@ -129,7 +129,7 @@ int t1() {
 
 int t2() {
   turn = 0; 
-  while (flag[0] == 1 && turn == 0);//while里面不能空
+  while (flag[0] == 1 && turn == 0);       //while里面不能空
   doSth();
   flag[1] = 0;
 }
@@ -173,7 +173,7 @@ int cal() {
   while (i < 10) {
     ct.sum[i] = 0;
     while (j < 10) {
-      ct.sum[i] = ct.sum[i,] + a[i][j] + b[i][j];//数组错误
+      ct.sum[i] = ct.sum[i,] + a[i][j] + b[i][j];   //数组错误
       j = j + 1;
     }
     i = i + 1;
@@ -200,7 +200,7 @@ int _a0_b1(int arr[10], float x, int y) {
       b = b - tmp;
       return a * b * tmp;
     }
-    ;//多个分号
+    ;                                       //多个分号
     i = i + 1;
   }
 }
@@ -214,7 +214,7 @@ int _F_o__0(struct { int i; int j; } ss, float f, int i) {
     a[ss.i] = b[ss.i];
     ss.i = ss.i + 1;
     if (ss.i >= 100) {
-      return a[ss.i - 1,];//有，不对
+      return a[ss.i - 1,];                  //有，不对
     }
   }
   ss.j = ss.i + ss.j;
@@ -227,7 +227,9 @@ struct Info {
   int fee;
 };
 
+//这是一个结构体函数，sepcifier是struct Info格式，fundec是calculate
 struct Info calculate(struct Info input, int a, int l) {
+  /*
   struct Info res;
   if (a > 0) {
     res.amount = a;
@@ -239,26 +241,28 @@ struct Info calculate(struct Info input, int a, int l) {
   } else {
     res.level = input.level;
   }
+  */
 
   if (res.level = 0) {
     res.fee = ----430.43;
-  } else if (res.level = = 1) {//两个等于分开了
+  } else if (res.level = = 1) {          //两个等于分开了
     res.fee = (res.amount - 43.33) * res.level + 43.33 * (res.level + 1);
-  } else if (res.level == 2) {//？？else为什么报错
+  } else if (res.level == 2) {
     res.fee = res.amount / 3 + res.amount * (res.level + 100);
-  } else //？？
+  } else 
     res.fee = 100 * ((100 / res.amount) - res.level);
 
-  return res + res * a-;
-}//？？
+  return res + res * a-;                 //负号有问题
+}
+
 
 int main() {
   int m, n, k = 1 + 2 * 4;
   struct ss {
-    struct { };//？？不能空
+    struct { };                         //结构体嵌套
     int i, j = 0;
-  } s
-}//？？
+  } s                                   //没有分号
+}
 
 //test 'D-1':
 int main() {
@@ -289,9 +293,9 @@ int traverseLclosure (struct global_State g, struct LClosure cl) {
 
 //test 'E1-1':
 int main() {
-  int b10 = 0655378;//八进制没有8
+  int b10 = 0655378;                     //八进制没有8
   int b15 = 16777216 + b10 / -0xfd;
-  int b18 = -0x7fffg;//十六进制
+  int b18 = -0x7fffg;                    //十六进制
   int b20 = -0x1ffffd;
   int b21 = -0312 + 0xdead;
   int b23 = 065536;
@@ -342,13 +346,13 @@ int ENCODER(struct Obj johab)
 
 //test 'E2-1':
 int main() {
-  float ik_j = 0.001e;//e后面少东西
+  float ik_j = 0.001e;                         //e后面少东西
   float _j = ik_j + 0123.2323E+32;
   struct {
     float f1;
     float f2;
   } s;
-  float mm = s.f1 * _j - 0.2132.0e232;//科学计数不对
+  float mm = s.f1 * _j - 0.2132.0e232;         //科学计数不对
 }
 
 //test 'E2-2':

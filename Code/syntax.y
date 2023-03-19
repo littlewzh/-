@@ -6,7 +6,12 @@
     extern int errorflag;
     int yyerror(const char *msg);
 
-    //#define YYDEBUG 1 //用于调试，使得输出bison调试信息
+    //#define LOCAL_MACHINE 1  //用于调试，使得输出自定义的bison调试信息
+    #ifdef LOCAL_MACHINE
+     #define bdebug(...) printf(__VA_ARGS__)
+    #else
+     #define bdebug(...) assert(1)
+    #endif
 %}
 %union{
     Tnode* node;
@@ -38,6 +43,7 @@
 //语法单元Program是初始语法单元，表示整个程序
 Program : ExtDefList                        {$$=create_node("Program",0,@$.first_line);Ninsert($$,1,$1);root=$$;}
     ;
+
 //每个Program可以产生一个ExtDefList，这里的ExtDefList表示零个或多个ExtDef
 ExtDefList :                                {$$=NULL;}
     | ExtDef ExtDefList                     {$$=create_node("ExtDefList",0,@$.first_line);Ninsert($$,2,$1,$2);}
@@ -52,10 +58,11 @@ ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_
 //一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;}//下一条有了这个可以去掉吗 
     | error SEMI                            {yyerrok;}
-    | Specifier error                       {yyerrok;}//全局变量没逗号
-    | error FunDec CompSt                   {yyerrok;}//函数类型不对
+    | Specifier error                       {yyerrok;}//全局变量没分号的错误
+    | error FunDec CompSt                   {bdebug("error FunDec CompSt \n");yyerrok;}//函数类型不对的错误
     ;
-//ExtDecList表示零个或多个VarDec
+
+//ExtDecList表示零个或多个VarDec变量定义
 ExtDecList : VarDec                         {$$=create_node("ExtDecList",0,@$.first_line);Ninsert($$,1,$1);}
     | VarDec COMMA ExtDecList               {$$=create_node("ExtDecList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     ;
@@ -67,8 +74,9 @@ Specifier : TYPE                            {$$=create_node("Specifier",0,@$.fir
 //结构体类型，OptTag是结构体名可有可无（？），STRUCT Tag用来直接用之前定义的结构体
 //最基本的结构体形式是例如struct Complex { int real, image; }，DefList可以空如果定义过后就可以直接用struct Complex a, b;也就是第二种形式
 StructSpecifier : STRUCT OptTag LC DefList RC       {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
-    | STRUCT Tag                                    {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}
-    | STRUCT OptTag LC error RC                     {yyerrok;}
+    | STRUCT Tag                                    {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}    
+    | STRUCT OptTag LC error RC                     {yyerrok;}//结构体定义的内部错误
+    | STRUCT error                          {yyerrok;} //struct后面跟着的所有可能错误
     ;
 OptTag :                                    {$$=NULL;}  
     | ID                                    {$$=create_node("OptTag",0,@$.first_line);Ninsert($$,1,$1);}
@@ -79,13 +87,14 @@ Tag : ID                                    {$$=create_node("Tag",0,@$.first_lin
 //VarDec表示对一个变量的定义
 VarDec : ID                                 {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,1,$1);}
     | VarDec LB INT RB                      {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
-    | VarDec LB error RB                    {yyerrok;}//error
+    | VarDec LB error RB                    {yyerrok;}
     ;
 
 //FunDec表示对一个函数头的定义：标识符+括号函数列表
 FunDec : ID LP VarList RP                   {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | ID LP RP                              {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
-    | ID LP error RP                        {yyerrok;}    //error
+    | ID LP error RP                        {yyerrok;}    
+    | ID LP error                           {yyerrok;}    
     ;
 //VarList 形参列表
 VarList : ParamDec COMMA VarList            {$$=create_node("VarList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
@@ -97,8 +106,8 @@ ParamDec : Specifier VarDec                 {$$=create_node("ParamDec",0,@$.firs
 
 // CompSt表示一个由一对花括号括起来的语句块：只能先定义再语句
 CompSt : LC DefList StmtList RC             {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
-    | error RC                              {yyerrok;}//error
-    //| LC DefList error                              {yyerrok;}//error
+    | error RC                              {yyerrok;}//右括号前的错误
+    //| LC DefList error                    {yyerrok;}//不能写，会冲突
     ;
 
 //StmtList就是零个或多个Stmt的组合
@@ -113,11 +122,13 @@ Stmt : Exp SEMI                             {$$=create_node("Stmt",0,@$.first_li
     | IF LP Exp RP Stmt ELSE Stmt                       {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,7,$1,$2,$3,$4,$5,$6,$7);}
     | WHILE LP Exp RP Stmt                              {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
     | IF LP error RP Stmt        %prec LOWER_THAT_ELSE  {yyerrok;}
-    | IF LP Exp RP error ELSE Stmt                      {yyerrok;}  
+    | IF LP error RP ELSE Stmt                          {yyerrok;}
+    | IF LP Exp RP error ELSE Stmt                      {yyerrok;}    
     | WHILE LP error RP Stmt                            {yyerrok;}
-    | Exp error                                         {}
-    | RETURN error                                      {yyerrok;}//error
-    | error SEMI                                        {yyerrok;}//error
+    | Exp error                                         {yyerrok;}
+    | RETURN error                                      {yyerrok;}
+    | error SEMI                                        {yyerrok;}
+    | error LP Exp RP Stmt                              {yyerrok;}
     ;
 
 //Local Definitions：与局部变量的定义有关：形式例如int a=1,b,c;
@@ -126,7 +137,9 @@ DefList :                                   {$$=NULL;}
     ;
 //每个Def就是一条分号首尾的变量定义
 Def : Specifier DecList SEMI                {$$=create_node("Def",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
-    | Specifier error SEMI                  {yyerrok;}//error
+    | Specifier error SEMI                  {yyerrok;}
+    | Specifier error                       {yyerrok;}  
+    //| Specifier DecList error                   {yyerrok;}//不能加，会冲突！
     ;
 //允许逗号分割
 DecList : Dec                               {$$=create_node("DecList",0,@$.first_line);Ninsert($$,1,$1);}     
@@ -150,8 +163,7 @@ Exp : Exp ASSIGNOP Exp                      {$$=create_node("Exp",0,@$.first_lin
     | LP Exp RP                             {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | MINUS Exp                             {$$=create_node("Exp",0,@$.first_line);Ninsert($$,2,$1,$2);}
     | NOT Exp                               {$$=create_node("Exp",0,@$.first_line);Ninsert($$,2,$1,$2);}
-//函数调用：
-    | ID LP Args RP                         {$$=create_node("Exp",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
+    | ID LP Args RP                         {$$=create_node("Exp",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}//函数调用
     | ID LP RP                              {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Exp LB Exp RB                         {$$=create_node("Exp",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | Exp DOT ID                            {$$=create_node("Exp",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
@@ -159,15 +171,29 @@ Exp : Exp ASSIGNOP Exp                      {$$=create_node("Exp",0,@$.first_lin
     | INT                                   {$$=create_node("Exp",0,@$.first_line);Ninsert($$,1,$1);}
     | FLOAT                                 {$$=create_node("Exp",0,@$.first_line);Ninsert($$,1,$1);}
     ;
+//错误：
+    | Exp ASSIGNOP error                    {yyerrok;}
+    | Exp AND error                         {yyerrok;}
+    | Exp OR error                          {yyerrok;}
+    | Exp RELOP error                       {yyerrok;}
+    | Exp MINUS error                       {yyerrok;}
+    | Exp STAR error                        {yyerrok;}
+    | Exp DIV error                         {yyerrok;}
+    | LP error RP                           {yyerrok;}
+    | ID LP error RP                        {yyerrok;}
+    | Exp LB error RB                       {yyerrok;}
+
+//Args是参数列表        
 Args : Exp COMMA Args                       {$$=create_node("Args",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Exp                                   {$$=create_node("Args",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 %%
 //
 int lastlineno=-1;//用于记录上一次报错的行数，使得一行只报错一次即可
+int onelineflag = 1;//1表示开启一行只打印一个错误，0为关闭
 int yyerror(const char *msg){
        errorflag=1;
-       if(yylineno!=lastlineno){//如果相等说明之前报错过了，就不打印
+       if(!onelineflag||yylineno!=lastlineno){//如果相等说明之前报错过了，就不打印
          lastlineno=yylineno;
          fprintf(stderr,"Error type B at line %d: %s ：unexpected token %s\n",yylineno,msg,yytext);
        }

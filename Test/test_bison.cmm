@@ -1,12 +1,45 @@
-int main(){
-    int i1=123;
-    int i2=0123;//83
-    int i3=0237;//159
-    int i4=0xAa1;//2721
-    int i33=0XFF32;//65530
-    float f1=1.23;
-    float f2=1.23e4;
-    float f2=1.23e-4;//0.000123
-    float f3=.23e-4;//0.000023
-    float f4=123.e-4;//0.0123
+
+//----------全局测试：ExtDefList----------
+//-----全局测试1：全局变量 ExtDef → Specifier ExtDecList SEMI
+int a = 1;//全局不能赋值
+float a[1][2],b;
+
+//-----全局测试2：结构体定义 ExtDef → Specifier SEMI
+//其中StructSpecifier → STRUCT OptTag LC DefList RC
+struct {};//Opttag 和deflist都可以空
+
+
+
+//-----全局测试3：函数定义ExtDef → Specifier FunDec CompSt
+int foo()//一定要有函数体
+//!如果前面没有函数体但这里有分号会影响下面读入错误
+;
+error//检测不出来？
+
+int foo(){}
+struct fuckstruct funcname(struct A a1){
+
+}
+
+//-----------局部测试：Local Definitions
+int localtest(){
+    int i1=1,i2=3,i[2][2]=1;
+   	int i = 1;      //ssss
+	float a = 5.e3;
+	float b = .5E-3;
+	float e = .e3;
+	int c = 09;
+	int d = 0x1G;
+
+    int i//缺少分号错误会报到下一行？？
+    int j
+    int k;
+
+	/*
+	123//
+	456
+	*/
+   
+   i++++++++;
+   int i;//局部只能先定义再使用
 }

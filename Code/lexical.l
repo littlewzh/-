@@ -15,9 +15,9 @@
 
 	//#define LOCAL_MACHINE 1  //用于调试，使得输出flex调试信息
     #ifdef LOCAL_MACHINE
-     #define debug(...) printf(__VA_ARGS__)
+     #define fdebug(...) printf(__VA_ARGS__)
     #else
-     #define debug(...) assert(1)
+     #define fdebug(...) assert(1)
     #endif
 %}
 %option yylineno 
@@ -33,15 +33,15 @@ letter  [_a-zA-Z]
 \n                           {yycolumn = 1;}
 [\r\t" "]+                   {}                                                 //空格等
 
-(0|[1-9]{digit}*)            {debug("INT       : %s\n",yytext);yylval.node=create_node("INT",INT,yylineno);yylval.node->i_val = atoi(yytext);return INT;}                                      //INT是无符号，不以0开头就行
+(0|[1-9]{digit}*)            {fdebug("INT       : %s\n",yytext);yylval.node=create_node("INT",INT,yylineno);yylval.node->i_val = atoi(yytext);return INT;}                                      //INT是无符号，不以0开头就行
 
-0[0-7]+                      {debug("8INT      : %s\n",yytext);yylval.node=create_node("INT",INT,yylineno);char * p=yytext;
+0[0-7]+                      {fdebug("8INT      : %s\n",yytext);yylval.node=create_node("INT",INT,yylineno);char * p=yytext;
   p++;int tmp=0;
   while(*p!='\0'){tmp=tmp*8+*p-48;p++;}
   yylval.node->i_val = tmp;return INT;
 }                                                 //8
 
-0(x|X)([0-9A-Fa-f])+         {debug("16INT     : %s\n",yytext);yylval.node=create_node("INT",INT,yylineno);char * p=yytext;
+0(x|X)([0-9A-Fa-f])+         {fdebug("16INT     : %s\n",yytext);yylval.node=create_node("INT",INT,yylineno);char * p=yytext;
   p+=2; int tmp = 0;
 	while (*p != '\0') {
 		if (*p >= '0' && *p <= '9')tmp = tmp * 16 + *p - '0';
@@ -53,7 +53,7 @@ letter  [_a-zA-Z]
 
 
 
-({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)?[-+]?{digit}+        {debug("FLOATE    : %s\n",yytext);yylval.node=create_node("FLOAT",FLOAT,yylineno);char * p=yytext;
+({digit}+\.{digit}+|\.{digit}+|{digit}+\.)(e|E)?[-+]?{digit}+        {fdebug("FLOATE    : %s\n",yytext);yylval.node=create_node("FLOAT",FLOAT,yylineno);char * p=yytext;
     float flans = 0;
 	int flstatus = 0,fltmp[3] = {0,0,0}, flwid1 = 0, flflag2 = 1;//三阶段分别解析数字：tmp0表示小数点前，1表示小数点后，2表示指数,wid1表示小数位数，flag2表示指数的正负
 	while (*p != '\0') {
@@ -84,30 +84,30 @@ letter  [_a-zA-Z]
 
 
 
-";"                          {debug("SEMI      : %s\n",yytext);yylval.node=create_node("SEMI",SEMI,yylineno);return SEMI;} 
-","                          {debug("COMMA     : %s\n",yytext);yylval.node=create_node("COMMA",COMMA,yylineno);return COMMA;}
->=|<=|>|<|==|!=              {debug("RELOP     : %s\n",yytext);yylval.node=create_node("RELOP",RELOP,yylineno);return RELOP;}
-"="                          {debug("ASSIGNOP  : %s\n",yytext);yylval.node=create_node("ASSIGNOP",ASSIGNOP,yylineno);return ASSIGNOP;} 
-"+"                          {debug("PLUS      : %s\n",yytext);yylval.node=create_node("PLUS",PLUS,yylineno);return PLUS;}
-"-"                          {debug("MINUS     : %s\n",yytext);yylval.node=create_node("MINUS",MINUS,yylineno);return MINUS;}
-"*"                          {debug("STAR      : %s\n",yytext);yylval.node=create_node("STAR",STAR,yylineno);return STAR;}
-"/"                          {debug("DIV       : %s\n",yytext);yylval.node=create_node("DIV",DIV,yylineno);return DIV;}
-"&&"                         {debug("AND       : %s\n",yytext);yylval.node=create_node("AND",AND,yylineno);return AND;}
-"||"                         {debug("OR        : %s\n",yytext);yylval.node=create_node("OR",OR,yylineno);return OR;}
-"."                          {debug("DOT       : %s\n",yytext);yylval.node=create_node("DOT",DOT,yylineno);return DOT;}
-"!"                          {debug("NOT       : %s\n",yytext);yylval.node=create_node("NOT",NOT,yylineno);return NOT;}
-("int"|"float")              {debug("TYPE      : %s\n",yytext);yylval.node=create_node("TYPE",TYPE,yylineno);yylval.node->s_val=malloc(sizeof(yytext));strcpy(yylval.node->s_val,yytext);return TYPE;}
-"("                          {debug("LP        : %s\n",yytext);yylval.node=create_node("LP",LP,yylineno);return LP;}
-")"                          {debug("RP        : %s\n",yytext);yylval.node=create_node("RP",RP,yylineno);return RP;}
-"["                          {debug("LB        : %s\n",yytext);yylval.node=create_node("LB",LB,yylineno);return LB;}
-"]"                          {debug("RB        : %s\n",yytext);yylval.node=create_node("RB",RB,yylineno);return RB;}
-"{"                          {debug("LC        : %s\n",yytext);yylval.node=create_node("LC",LC,yylineno);return LC;}
-"}"                          {debug("RC        : %s\n",yytext);yylval.node=create_node("RC",RC,yylineno);return RC;}
-"struct"                     {debug("STRUCT    : %s\n",yytext);yylval.node=create_node("STRUCT",STRUCT,yylineno);return STRUCT;}
-"return"                     {debug("RETURN    : %s\n",yytext);yylval.node=create_node("RETURN",RETURN,yylineno);return RETURN;}
-"if"                         {debug("IF        : %s\n",yytext);yylval.node=create_node("IF",IF,yylineno);return IF;}
-"else"                       {debug("ELSE      : %s\n",yytext);yylval.node=create_node("ELSE",ELSE,yylineno);return ELSE;}
-"while"                      {debug("WHILE     : %s\n",yytext);yylval.node=create_node("WHILE",WHILE,yylineno);return WHILE;}
-{letter}({digit}|{letter})*  {debug("ID        : %s\n",yytext);yylval.node=create_node("ID",ID,yylineno);yylval.node->s_val=malloc(sizeof(yytext));strcpy(yylval.node->s_val,yytext);return ID;}               //标识符：52个大写字母或小写字母、10个数字和一个下划线字符组成的字符串，不能数字开头,为了去除保留字，最后再匹配
+";"                          {fdebug("SEMI      : %s\n",yytext);yylval.node=create_node("SEMI",SEMI,yylineno);return SEMI;} 
+","                          {fdebug("COMMA     : %s\n",yytext);yylval.node=create_node("COMMA",COMMA,yylineno);return COMMA;}
+>=|<=|>|<|==|!=              {fdebug("RELOP     : %s\n",yytext);yylval.node=create_node("RELOP",RELOP,yylineno);return RELOP;}
+"="                          {fdebug("ASSIGNOP  : %s\n",yytext);yylval.node=create_node("ASSIGNOP",ASSIGNOP,yylineno);return ASSIGNOP;} 
+"+"                          {fdebug("PLUS      : %s\n",yytext);yylval.node=create_node("PLUS",PLUS,yylineno);return PLUS;}
+"-"                          {fdebug("MINUS     : %s\n",yytext);yylval.node=create_node("MINUS",MINUS,yylineno);return MINUS;}
+"*"                          {fdebug("STAR      : %s\n",yytext);yylval.node=create_node("STAR",STAR,yylineno);return STAR;}
+"/"                          {fdebug("DIV       : %s\n",yytext);yylval.node=create_node("DIV",DIV,yylineno);return DIV;}
+"&&"                         {fdebug("AND       : %s\n",yytext);yylval.node=create_node("AND",AND,yylineno);return AND;}
+"||"                         {fdebug("OR        : %s\n",yytext);yylval.node=create_node("OR",OR,yylineno);return OR;}
+"."                          {fdebug("DOT       : %s\n",yytext);yylval.node=create_node("DOT",DOT,yylineno);return DOT;}
+"!"                          {fdebug("NOT       : %s\n",yytext);yylval.node=create_node("NOT",NOT,yylineno);return NOT;}
+("int"|"float")              {fdebug("TYPE      : %s\n",yytext);yylval.node=create_node("TYPE",TYPE,yylineno);yylval.node->s_val=malloc(sizeof(yytext));strcpy(yylval.node->s_val,yytext);return TYPE;}
+"("                          {fdebug("LP        : %s\n",yytext);yylval.node=create_node("LP",LP,yylineno);return LP;}
+")"                          {fdebug("RP        : %s\n",yytext);yylval.node=create_node("RP",RP,yylineno);return RP;}
+"["                          {fdebug("LB        : %s\n",yytext);yylval.node=create_node("LB",LB,yylineno);return LB;}
+"]"                          {fdebug("RB        : %s\n",yytext);yylval.node=create_node("RB",RB,yylineno);return RB;}
+"{"                          {fdebug("LC        : %s\n",yytext);yylval.node=create_node("LC",LC,yylineno);return LC;}
+"}"                          {fdebug("RC        : %s\n",yytext);yylval.node=create_node("RC",RC,yylineno);return RC;}
+"struct"                     {fdebug("STRUCT    : %s\n",yytext);yylval.node=create_node("STRUCT",STRUCT,yylineno);return STRUCT;}
+"return"                     {fdebug("RETURN    : %s\n",yytext);yylval.node=create_node("RETURN",RETURN,yylineno);return RETURN;}
+"if"                         {fdebug("IF        : %s\n",yytext);yylval.node=create_node("IF",IF,yylineno);return IF;}
+"else"                       {fdebug("ELSE      : %s\n",yytext);yylval.node=create_node("ELSE",ELSE,yylineno);return ELSE;}
+"while"                      {fdebug("WHILE     : %s\n",yytext);yylval.node=create_node("WHILE",WHILE,yylineno);return WHILE;}
+{letter}({digit}|{letter})*  {fdebug("ID        : %s\n",yytext);yylval.node=create_node("ID",ID,yylineno);yylval.node->s_val=malloc(sizeof(yytext));strcpy(yylval.node->s_val,yytext);return ID;}               //标识符：52个大写字母或小写字母、10个数字和一个下划线字符组成的字符串，不能数字开头,为了去除保留字，最后再匹配
 .                            {errorflag=1;printf("Error type A at Line %d: Mysterious characters \'%s\'\n",yylineno, yytext);}//如果不能符合上述正则说明有词法错误
 %%

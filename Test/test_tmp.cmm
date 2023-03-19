@@ -1,0 +1,5 @@
+int localtest(){
+    int i//缺少分号错误会报到下一行？？然后少一行
+    int j
+    int k;
+}
