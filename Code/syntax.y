@@ -58,7 +58,7 @@ ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_
 //一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;}//下一条有了这个可以去掉吗 
     | error SEMI                            {yyerrok;}
-    | Specifier error                       {yyerrok;}//全局变量没分号的错误                       ???????
+  //  | Specifier error                       {yyerrok;}//全局变量没分号的错误                       ???????
     | error FunDec CompSt                   {bdebug("error FunDec CompSt \n");yyerrok;}//函数类型不对的错误
     ;
 
@@ -78,7 +78,7 @@ Specifier : TYPE                            {$$=create_node("Specifier",0,@$.fir
 StructSpecifier : STRUCT OptTag LC DefList RC           {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
     | STRUCT Tag                                        {$$=create_node("StructSpecifier",0,@$.first_line);Ninsert($$,2,$1,$2);}    
     | STRUCT OptTag LC error RC                         {yyerrok;}//结构体定义的内部错误
-    | STRUCT error                                      {yyerrok;} //struct后面跟着的所有可能错误              ??????
+  //  | STRUCT error                                      {yyerrok;} //struct后面跟着的所有可能错误              ??????
     ;
 OptTag :                                                {$$=NULL;}  
     | ID                                                {$$=create_node("OptTag",0,@$.first_line);Ninsert($$,1,$1);}
@@ -96,7 +96,6 @@ VarDec : ID                                             {$$=create_node("VarDec"
 FunDec : ID LP VarList RP                               {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | ID LP RP                                          {$$=create_node("FunDec",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | ID LP error RP                                    {yyerrok;}    
-    | ID LP error                                       {yyerrok;}    
     ;
 //VarList 形参列表
 VarList : ParamDec COMMA VarList                        {$$=create_node("VarList",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
@@ -109,7 +108,6 @@ ParamDec : Specifier VarDec                             {$$=create_node("ParamDe
 // CompSt表示一个由一对花括号括起来的语句块：只能先定义再语句
 CompSt : LC DefList StmtList RC                         {$$=create_node("CompSt",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | error RC                                          {yyerrok;}//右括号前的错误
-    //| LC DefList error                                {yyerrok;}//不能写，会冲突
     ;
 
 //StmtList就是零个或多个Stmt的组合
@@ -127,8 +125,8 @@ Stmt : Exp SEMI                                         {$$=create_node("Stmt",0
     | IF LP error RP ELSE Stmt                          {yyerrok;}
     | IF LP Exp RP error ELSE Stmt                      {yyerrok;}    
     | WHILE LP error RP Stmt                            {yyerrok;}
-    | Exp error                                         {yyerrok;}
-    | RETURN error                                      {yyerrok;}
+  //  | Exp error                                         {yyerrok;}
+  //  | RETURN error                                      {yyerrok;}
     | error SEMI                                        {yyerrok;}
     | error LP Exp RP Stmt                              {yyerrok;}         // ??????
     ;
@@ -140,7 +138,7 @@ DefList :                                   {$$=NULL;}
 //每个Def就是一条分号首尾的变量定义
 Def : Specifier DecList SEMI                {$$=create_node("Def",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Specifier error SEMI                  {yyerrok;}
-    | Specifier error                       {yyerrok;}     // ?????????
+    //| Specifier error                       {yyerrok;}     // ?????????
     ;
 //允许逗号分割
 DecList : Dec                               {$$=create_node("DecList",0,@$.first_line);Ninsert($$,1,$1);}     
@@ -182,7 +180,7 @@ Exp : Exp ASSIGNOP Exp                      {$$=create_node("Exp",0,@$.first_lin
     | Exp DIV error                         {yyerrok;}
     | LP error RP                           {yyerrok;}
     | ID LP error RP                        {yyerrok;}
-    | Exp LB error RB                       {yyerrok;}
+    | Exp LB error RB                       {yyerrok;} 
 
 //Args是参数列表        
 Args : Exp COMMA Args                       {$$=create_node("Args",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
