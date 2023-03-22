@@ -3,6 +3,9 @@
 //-----全局测试1：全局变量 ExtDef → Specifier ExtDecList SEMI
 int a = 1;//全局不能赋值
 float a[1][2],b;
+int x
+int y
+int j;
 
 //-----全局测试2：结构体定义 ExtDef → Specifier SEMI
 //其中StructSpecifier → STRUCT OptTag LC DefList RC

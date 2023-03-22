@@ -58,7 +58,7 @@ ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_
 //一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;}//下一条有了这个可以去掉吗 
     | error SEMI                            {yyerrok;}
-  //  | Specifier error                       {yyerrok;}//全局变量没分号的错误                       ???????
+    | Specifier error                       {yyerrok;}//连着两个全局变量没分号的错误                       ???????
     | error FunDec CompSt                   {bdebug("error FunDec CompSt \n");yyerrok;}//函数类型不对的错误
     ;
 
