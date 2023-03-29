@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "N_tree.h"
 extern void yyrestart(FILE*);
 extern int yylex();//调用yylex()进行词法分析
 extern int yyparse();
-extern struct treenode* root;
-extern void dfs(struct treenode* ,int);
+extern Tnode* root;
 extern int errorflag;
 extern int yydebug;//用于bison调试
 int main(int argc, char** argv){
