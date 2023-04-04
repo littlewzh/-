@@ -86,7 +86,7 @@ OptTag :                                                {$$=NULL;}
 Tag : ID                                                {$$=create_node("Tag",0,@$.first_line);Ninsert($$,1,$1);}
     ;
 
-//VarDec表示对一个变量的定义
+//VarDec表示对一个变量的定义，变量或数组
 VarDec : ID                                             {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,1,$1);}
     | VarDec LB INT RB                                  {$$=create_node("VarDec",0,@$.first_line);Ninsert($$,4,$1,$2,$3,$4);}
     | VarDec LB error RB                                {yyerrok;}

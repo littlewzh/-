@@ -24,3 +24,4 @@ Tnode *create_node(char *name,int type,int line);
 void insert_node(Tnode *p,Tnode* newn);
 void Ninsert(Tnode* p,int n,...);
 void dfs(Tnode* s,int dep);
+Tnode *childth_node(Tnode *p,int n);

@@ -8,6 +8,7 @@ struct Type_{
         BASIC,
         ARRAY,
         STRUCTURE,
+        STRUCTVAR,
         FUNC
     } kind;
     union{
@@ -18,9 +19,9 @@ struct Type_{
         } array;
         FieldList* structure;
         struct{
-            int num;
-            Type* retval;
-            FieldList* args;
+            int num;         //参数个数
+            Type* retval;    //返回类型
+            FieldList* args; //参数类型
             int state;       //该函数当前的状态：声明/定义
         }func;
     } u;
@@ -46,3 +47,17 @@ void Delete(Element* );
 
 //SDT
 void semantic(Tnode* );
+void Program(Tnode* s);
+void Extdeflist(Tnode *s);
+void Extdef(Tnode* s);
+FieldList* Fundec(Tnode* s,Type* t);
+FieldList* Varlist(Tnode* s);
+FieldList* Paramdec(Tnode* s);
+void Extdeclist(Tnode* s,Type* t);
+FieldList* Vardec(Tnode* s,Type* t);
+Type* Specifier(Tnode* s);
+Type* Structspecifier(Tnode* s);
+char* Tag(Tnode* s);
+char* Opttag(Tnode* s);
+void Compst(Tnode* s,FieldList* f);
+FieldList* Deflist(Tnode* s,Type* t);
