@@ -22,7 +22,11 @@ struct Type_{
             int num;         //参数个数
             Type* retval;    //返回类型
             FieldList* args; //参数类型
-            int state;       //该函数当前的状态：声明/定义
+            enum {
+                DEC,
+                DEC_UNDEF,
+                DEF
+            } state;       //该函数当前的状态：声明/定义
         }func;
     } u;
 };
@@ -54,7 +58,7 @@ void semantic(Tnode* );
 void Program(Tnode* s);
 void Extdeflist(Tnode *s);
 void Extdef(Tnode* s);
-FieldList* Fundec(Tnode* s,Type* t);
+FieldList* Fundec(Tnode* s,Type* t,int state);
 FieldList* Varlist(Tnode* s);
 FieldList* Paramdec(Tnode* s);
 void Extdeclist(Tnode* s,Type* t);

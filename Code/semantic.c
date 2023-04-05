@@ -60,6 +60,7 @@ void Delete(Element *s){
 int equvilence(Type* t1,Type* t2){
     //数组等价
     //结构体等价
+    //函数定义声明等价
     assert(t1!=NULL);
     assert(t2!=NULL);
     int flag=1;
@@ -86,11 +87,28 @@ int equvilence(Type* t1,Type* t2){
                 if(f1!=NULL||f2!=NULL) flag=0;
                 break;
             }
-                
+            case FUNC:
+            {
+                //判断返回类型
+                if(!equvilence(t1->u.func.retval,t2->u.func.retval)) {flag=0;break;}
+                //判断函数参数
+                if(t1->u.func.num!=t2->u.func.num) {flag=0;break;}
+                FieldList* a1 = t1->u.func.args;
+                FieldList* a2 = t2->u.func.args;
+                while(a1!=NULL&&a2!=NULL){
+                    if(!equvilence(a1->type,a2->type)) {flag=0;break;}
+                    a1=a1->next;
+                    a2=a2->next;
+                }
+                break;
+            }
             default: printf("undefined equvilence\n");
         }
         return flag;
     }
+
+}
+int checkfunc(){  //检查函数定义
 
 }
 void semantic(Tnode *s){
@@ -144,27 +162,61 @@ void Extdef(Tnode* s){
             //Specifier ExtDecList SEMI
             Extdeclist(cur,def);
         }else{
+            //Type* t = malloc(sizeof(Type));
+            //t->kind = FUNC;
+            //t->u.func.retval = def;
+            if(!strcmp(cur->nextbro->name,"SEMI")){
+                //Specifier FunDec SEMI
+                FieldList* f=Fundec(cur,def,0); //声明
+                if(f==NULL) return;
+            }else{
             //Specifier FunDec CompSt
-            FieldList* f=Fundec(cur,def);
-            if(f==NULL) return;
-            cur = cur->nextbro;
-            Compst(cur,f);
+               FieldList* f=Fundec(cur,def,1);  //定义
+               if(f==NULL) return;
+               cur = cur->nextbro;
+               Compst(cur,f); 
+            }
+            
         }
     }
 }
-FieldList* Fundec(Tnode* s,Type* t){
+FieldList* Fundec(Tnode* s,Type* t,int state){
     sdebug("Fundec\n");
     assert(strcmp(s->name,"FunDec")==0);
     Tnode* cur = s->firstchild;
     Element* e = Search(cur->s_val);
     if(e!=NULL){
-        Error(4,cur->line); //函数出现重复定义（即同样的函数名出现了不止一次定义
+        if(e->type->kind==FUNC && e->type->u.func.state==DEF&&state){
+            Error(4,cur->line); //函数出现重复定义（即同样的函数名出现了不止一次定义
         return NULL;
+        }else if(e->type->kind==FUNC &&e->type->u.func.state==DEC_UNDEF){
+            Type* t1=e->type;
+            Type* t2 = malloc(sizeof(Type));
+            t2->kind = FUNC;
+            t2->u.func.retval=t;
+            t2->u.func.num=0;
+            cur = childth_node(s,3);
+            if(!strcmp(cur->name,"VarList")){
+                FieldList *l = Varlist(cur);
+                t2->u.func.args = l;
+                while(l!=NULL){
+                    t2->u.func.num++;
+                    l=l->next;
+                }
+            }
+            if(!equvilence(t1,t2)){
+                Error(19,cur->line);//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
+                return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
+            }
+            e->type->u.func.state = state ? DEF:DEC_UNDEF;
+            return NULL;
+        }
     }else{
         Type* fun = malloc(sizeof(Type));
         fun->kind = FUNC;
         fun->u.func.retval=t;
         fun->u.func.num=0;
+        fun->u.func.state = state ? DEF:DEC_UNDEF;
         cur = childth_node(s,3);
         if(!strcmp(cur->name,"VarList")){
             FieldList *l = Varlist(cur);

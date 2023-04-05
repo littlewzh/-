@@ -54,6 +54,7 @@ ExtDef : Specifier ExtDecList SEMI          {$$=create_node("ExtDef",0,@$.first_
 //Specifier SEMI专门为结构体的定义而准备，也会允许出现“int;”
     | Specifier SEMI                        {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,2,$1,$2);}
 //函数的定义：FunDec是函数头，一定要有函数体CompSt
+    | Specifier FunDec SEMI                 {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
     | Specifier FunDec CompSt               {$$=create_node("ExtDef",0,@$.first_line);Ninsert($$,3,$1,$2,$3);}
 //一些可能的错误：全局
     | Specifier error SEMI                  {yyerrok;}//下一条有了这个可以去掉吗 
