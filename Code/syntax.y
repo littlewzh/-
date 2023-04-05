@@ -121,6 +121,7 @@ Stmt : Exp SEMI                                         {$$=create_node("Stmt",0
     | IF LP Exp RP Stmt        %prec LOWER_THAT_ELSE    {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
     | IF LP Exp RP Stmt ELSE Stmt                       {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,7,$1,$2,$3,$4,$5,$6,$7);}
     | WHILE LP Exp RP Stmt                              {$$=create_node("Stmt",0,@$.first_line);Ninsert($$,5,$1,$2,$3,$4,$5);}
+//error 
     | IF LP error RP Stmt        %prec LOWER_THAT_ELSE  {yyerrok;}
     | IF LP error RP ELSE Stmt                          {yyerrok;}
     | IF LP Exp RP error ELSE Stmt                      {yyerrok;}    

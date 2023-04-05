@@ -567,11 +567,11 @@ static const yytype_uint8 yyrline[] =
       61,    62,    66,    67,    71,    72,    78,    79,    80,    83,
       84,    86,    90,    91,    92,    96,    97,    98,   101,   102,
      105,   109,   110,   114,   115,   118,   119,   120,   121,   122,
-     123,   124,   125,   126,   127,   130,   131,   135,   136,   139,
-     140,   144,   145,   146,   149,   150,   154,   155,   156,   157,
-     158,   159,   160,   161,   162,   163,   164,   165,   166,   167,
-     168,   169,   170,   171,   174,   175,   176,   177,   178,   179,
-     180,   181,   182,   183,   186,   187
+     123,   125,   126,   127,   128,   131,   132,   136,   137,   140,
+     141,   145,   146,   147,   150,   151,   155,   156,   157,   158,
+     159,   160,   161,   162,   163,   164,   165,   166,   167,   168,
+     169,   170,   171,   172,   175,   176,   177,   178,   179,   180,
+     181,   182,   183,   184,   187,   188
 };
 #endif
 
@@ -1842,271 +1842,271 @@ yyreduce:
     break;
 
   case 41:
-#line 124 "./syntax.y"
+#line 125 "./syntax.y"
                                                         {yyerrok;}
 #line 1848 "./syntax.tab.c"
     break;
 
   case 42:
-#line 125 "./syntax.y"
+#line 126 "./syntax.y"
                                                         {yyerrok;}
 #line 1854 "./syntax.tab.c"
     break;
 
   case 43:
-#line 126 "./syntax.y"
+#line 127 "./syntax.y"
                                                         {yyerrok;}
 #line 1860 "./syntax.tab.c"
     break;
 
   case 44:
-#line 127 "./syntax.y"
+#line 128 "./syntax.y"
                                                         {yyerrok;}
 #line 1866 "./syntax.tab.c"
     break;
 
   case 45:
-#line 130 "./syntax.y"
+#line 131 "./syntax.y"
                                                         {yyerrok;}
 #line 1872 "./syntax.tab.c"
     break;
 
   case 46:
-#line 131 "./syntax.y"
+#line 132 "./syntax.y"
                                                         {yyerrok;}
 #line 1878 "./syntax.tab.c"
     break;
 
   case 47:
-#line 135 "./syntax.y"
+#line 136 "./syntax.y"
                                             {(yyval.node)=NULL;}
 #line 1884 "./syntax.tab.c"
     break;
 
   case 48:
-#line 136 "./syntax.y"
+#line 137 "./syntax.y"
                                             {(yyval.node)=create_node("DefList",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1890 "./syntax.tab.c"
     break;
 
   case 49:
-#line 139 "./syntax.y"
+#line 140 "./syntax.y"
                                             {(yyval.node)=create_node("Def",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1896 "./syntax.tab.c"
     break;
 
   case 50:
-#line 140 "./syntax.y"
+#line 141 "./syntax.y"
                                             {yyerrok;}
 #line 1902 "./syntax.tab.c"
     break;
 
   case 51:
-#line 144 "./syntax.y"
+#line 145 "./syntax.y"
                                             {(yyval.node)=create_node("DecList",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
 #line 1908 "./syntax.tab.c"
     break;
 
   case 52:
-#line 145 "./syntax.y"
+#line 146 "./syntax.y"
                                             {(yyval.node)=create_node("DecList",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1914 "./syntax.tab.c"
     break;
 
   case 53:
-#line 146 "./syntax.y"
+#line 147 "./syntax.y"
                                             {yyerrok;}
 #line 1920 "./syntax.tab.c"
     break;
 
   case 54:
-#line 149 "./syntax.y"
+#line 150 "./syntax.y"
                                             {(yyval.node)=create_node("Dec",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
 #line 1926 "./syntax.tab.c"
     break;
 
   case 55:
-#line 150 "./syntax.y"
+#line 151 "./syntax.y"
                                             {(yyval.node)=create_node("Dec",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1932 "./syntax.tab.c"
     break;
 
   case 56:
-#line 154 "./syntax.y"
+#line 155 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1938 "./syntax.tab.c"
     break;
 
   case 57:
-#line 155 "./syntax.y"
+#line 156 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1944 "./syntax.tab.c"
     break;
 
   case 58:
-#line 156 "./syntax.y"
+#line 157 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1950 "./syntax.tab.c"
     break;
 
   case 59:
-#line 157 "./syntax.y"
+#line 158 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1956 "./syntax.tab.c"
     break;
 
   case 60:
-#line 158 "./syntax.y"
+#line 159 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1962 "./syntax.tab.c"
     break;
 
   case 61:
-#line 159 "./syntax.y"
+#line 160 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1968 "./syntax.tab.c"
     break;
 
   case 62:
-#line 160 "./syntax.y"
+#line 161 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1974 "./syntax.tab.c"
     break;
 
   case 63:
-#line 161 "./syntax.y"
+#line 162 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1980 "./syntax.tab.c"
     break;
 
   case 64:
-#line 162 "./syntax.y"
+#line 163 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1986 "./syntax.tab.c"
     break;
 
   case 65:
-#line 163 "./syntax.y"
+#line 164 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1992 "./syntax.tab.c"
     break;
 
   case 66:
-#line 164 "./syntax.y"
+#line 165 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),2,(yyvsp[-1].node),(yyvsp[0].node));}
 #line 1998 "./syntax.tab.c"
     break;
 
   case 67:
-#line 165 "./syntax.y"
+#line 166 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 2004 "./syntax.tab.c"
     break;
 
   case 68:
-#line 166 "./syntax.y"
+#line 167 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 2010 "./syntax.tab.c"
     break;
 
   case 69:
-#line 167 "./syntax.y"
+#line 168 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),4,(yyvsp[-3].node),(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 2016 "./syntax.tab.c"
     break;
 
   case 70:
-#line 168 "./syntax.y"
+#line 169 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 2022 "./syntax.tab.c"
     break;
 
   case 71:
-#line 169 "./syntax.y"
+#line 170 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
 #line 2028 "./syntax.tab.c"
     break;
 
   case 72:
-#line 170 "./syntax.y"
+#line 171 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
 #line 2034 "./syntax.tab.c"
     break;
 
   case 73:
-#line 171 "./syntax.y"
+#line 172 "./syntax.y"
                                             {(yyval.node)=create_node("Exp",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
 #line 2040 "./syntax.tab.c"
     break;
 
   case 74:
-#line 174 "./syntax.y"
+#line 175 "./syntax.y"
                                             {yyerrok;}
 #line 2046 "./syntax.tab.c"
     break;
 
   case 75:
-#line 175 "./syntax.y"
+#line 176 "./syntax.y"
                                             {yyerrok;}
 #line 2052 "./syntax.tab.c"
     break;
 
   case 76:
-#line 176 "./syntax.y"
+#line 177 "./syntax.y"
                                             {yyerrok;}
 #line 2058 "./syntax.tab.c"
     break;
 
   case 77:
-#line 177 "./syntax.y"
+#line 178 "./syntax.y"
                                             {yyerrok;}
 #line 2064 "./syntax.tab.c"
     break;
 
   case 78:
-#line 178 "./syntax.y"
+#line 179 "./syntax.y"
                                             {yyerrok;}
 #line 2070 "./syntax.tab.c"
     break;
 
   case 79:
-#line 179 "./syntax.y"
+#line 180 "./syntax.y"
                                             {yyerrok;}
 #line 2076 "./syntax.tab.c"
     break;
 
   case 80:
-#line 180 "./syntax.y"
+#line 181 "./syntax.y"
                                             {yyerrok;}
 #line 2082 "./syntax.tab.c"
     break;
 
   case 81:
-#line 181 "./syntax.y"
+#line 182 "./syntax.y"
                                             {yyerrok;}
 #line 2088 "./syntax.tab.c"
     break;
 
   case 82:
-#line 182 "./syntax.y"
+#line 183 "./syntax.y"
                                             {yyerrok;}
 #line 2094 "./syntax.tab.c"
     break;
 
   case 83:
-#line 183 "./syntax.y"
+#line 184 "./syntax.y"
                                             {yyerrok;}
 #line 2100 "./syntax.tab.c"
     break;
 
   case 84:
-#line 186 "./syntax.y"
+#line 187 "./syntax.y"
                                             {(yyval.node)=create_node("Args",0,(yyloc).first_line);Ninsert((yyval.node),3,(yyvsp[-2].node),(yyvsp[-1].node),(yyvsp[0].node));}
 #line 2106 "./syntax.tab.c"
     break;
 
   case 85:
-#line 187 "./syntax.y"
+#line 188 "./syntax.y"
                                             {(yyval.node)=create_node("Args",0,(yyloc).first_line);Ninsert((yyval.node),1,(yyvsp[0].node));}
 #line 2112 "./syntax.tab.c"
     break;
@@ -2350,7 +2350,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 189 "./syntax.y"
+#line 190 "./syntax.y"
 
 //
 int lastlineno=-1;//用于记录上一次报错的行数，使得一行只报错一次即可

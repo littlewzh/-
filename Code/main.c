@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "N_tree.h"
+#include "semantic.h"
 extern void yyrestart(FILE*);
 extern int yylex();//调用yylex()进行词法分析
 extern int yyparse();
@@ -20,6 +20,11 @@ int main(int argc, char** argv){
     yyparse();//对输入文件进行语法分析
     if(!errorflag){
         dfs(root,0);
+        inithash();
+        Program(root);
+        printhash();
     }
+    
+
     return 0;
 }

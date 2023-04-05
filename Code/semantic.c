@@ -1,9 +1,15 @@
 #include "semantic.h"
 
-#define Error(n,line) printf("Error type %d at Line %d:",n,line)
-
+#define Error(n,line) printf("Error type %d at Line %d:\n",n,line)
+#define SEMANTIC
+#ifdef SEMANTIC
+#define sdebug(...) printf(__VA_ARGS__)
+#else
+#define sdebug(...) assert(1)
+#endif
+#define CHECK printf("here\n")
 //extern struct treenode;
-Element* Hashtable[HASHSIZE];
+Element* Hashtable[HASHSIZE+1];
 
 unsigned int hash_pjw(char* name){
     unsigned int val =0,i;
@@ -12,6 +18,22 @@ unsigned int hash_pjw(char* name){
         if(i = val & ~0x3fff)  val = (val ^ (i >> 12)) & 0x3fff;
     }
     return val;
+}
+void inithash(){
+    for(int i=0;i<= HASHSIZE;i++){
+        Hashtable[i]=NULL;
+    }
+}
+void printhash(){
+    for(int i=0;i<= HASHSIZE;i++){
+        if(Hashtable[i]!=NULL){
+            Element* e = Hashtable[i];
+            while(e!=NULL){
+                printf("%s  %d\n",e->name,e->type->kind);
+                e = e->next;
+            }
+        }
+    }
 }
 Element* Search(char* name){
     unsigned int key=hash_pjw(name);
@@ -26,6 +48,7 @@ Element* Search(char* name){
 }
 void Insert(Element *s){
     unsigned int key=hash_pjw(s->name);
+    //CHECK;
     s->next = Hashtable[key];
     Hashtable[key] = s;
 
@@ -34,11 +57,46 @@ void Delete(Element *s){
     unsigned int key=hash_pjw(s->name);
 
 }
+int equvilence(Type* t1,Type* t2){
+    //数组等价
+    //结构体等价
+    assert(t1!=NULL);
+    assert(t2!=NULL);
+    int flag=1;
+    if(t1->kind!=t2->kind){
+        flag=0;
+        return flag;
+    }else{  //t1->kind==t2->kind
+        switch(t1->kind){
+            case BASIC:
+                if(t1->u.basic!=t2->u.basic) flag=0;
+                break;
+            case ARRAY:
+                flag = equvilence(t1->u.array.elem,t2->u.array.elem);
+                break;
+            case STRUCTVAR:
+            {
+                FieldList* f1 = t1->u.structure;
+                FieldList* f2 = t2->u.structure;
+                while(f1!=NULL&&f2!=NULL){
+                    if(!equvilence(f1->type,f2->type)) {flag=0;break;}
+                    f1=f1->next;
+                    f2=f2->next;
+                }
+                if(f1!=NULL||f2!=NULL) flag=0;
+                break;
+            }
+                
+            default: printf("undefined equvilence\n");
+        }
+        return flag;
+    }
 
+}
 void semantic(Tnode *s){
     
 }
-int judge(Tnode* s,int num,...){
+int judge(Tnode* s,int num,...){  //判断某个结点的子产生式是否为“”，“”，。。。
     va_list valist;
     va_start(valist,num);
     Tnode* cur=s->firstchild;
@@ -48,22 +106,28 @@ int judge(Tnode* s,int num,...){
         cur=cur->nextbro;
         if(cur==NULL) return 0;
     }
+    if(cur!=NULL) return 0;
     return 1;
 }
+
+
 void Program(Tnode* s){
+    sdebug("program\n");
     assert(strcmp(s->name,"Program")==0);
-    if(!strcmp(s->firstchild->name,"ExtDeflist")) Extdeflist(s->firstchild);
+    if(!strcmp(s->firstchild->name,"ExtDefList")) Extdeflist(s->firstchild);
 }
 void Extdeflist(Tnode *s){
-    assert(strcmp(s->name,"ExtDeflist")==0);
+    sdebug("Extdeflist\n");
+    assert(strcmp(s->name,"ExtDefList")==0);
     Tnode* cur = s->firstchild;
     if(!strcmp(cur->name,"ExtDef")) Extdef(cur);
     cur = cur->nextbro;
     if(cur!=NULL){
-        if(!strcmp(cur->name,"ExtDeflist")) Extdeflist(cur);
+        if(!strcmp(cur->name,"ExtDefList")) Extdeflist(cur);
     }
 }
 void Extdef(Tnode* s){
+    sdebug("Extdef\n");
     assert(strcmp(s->name,"ExtDef")==0);
     Tnode* cur = s->firstchild;
     Type* def=NULL;
@@ -82,13 +146,15 @@ void Extdef(Tnode* s){
         }else{
             //Specifier FunDec CompSt
             FieldList* f=Fundec(cur,def);
+            if(f==NULL) return;
             cur = cur->nextbro;
             Compst(cur,f);
         }
     }
 }
 FieldList* Fundec(Tnode* s,Type* t){
-    assert(strcmp(s->name,"FunDec"));
+    sdebug("Fundec\n");
+    assert(strcmp(s->name,"FunDec")==0);
     Tnode* cur = s->firstchild;
     Element* e = Search(cur->s_val);
     if(e!=NULL){
@@ -119,7 +185,8 @@ FieldList* Fundec(Tnode* s,Type* t){
     }
 }
 FieldList* Varlist(Tnode* s){
-    assert(strcmp(s->name,"VarList"));
+    sdebug("Varlist\n");
+    assert(strcmp(s->name,"VarList")==0);
     Tnode* cur = s->firstchild;
     FieldList *l = malloc(sizeof(FieldList));
     l = Paramdec(cur);
@@ -131,7 +198,8 @@ FieldList* Varlist(Tnode* s){
     return l;
 }
 FieldList* Paramdec(Tnode* s){
-    assert(strcmp(s->name,"ParamDec"));
+    sdebug("Paramdec\n");
+    assert(strcmp(s->name,"ParamDec")==0);
     Tnode* cur = s->firstchild;
     Type *def = Specifier(cur);
     cur = cur->nextbro;
@@ -139,6 +207,7 @@ FieldList* Paramdec(Tnode* s){
     return Vardec(cur,def);
 }
 void Extdeclist(Tnode* s,Type* t){
+    sdebug("Extdeclist\n");
     assert(strcmp(s->name,"ExtDecList")==0);
     Tnode *cur=s->firstchild;
     if(!strcmp(cur->name,"VarDec")){ Vardec(cur,t);}
@@ -151,6 +220,7 @@ void Extdeclist(Tnode* s,Type* t){
     }
 }
 FieldList* Vardec(Tnode* s,Type* t){
+    sdebug("Vardec\n");
     assert(strcmp(s->name,"VarDec")==0);
     Tnode *cur = s->firstchild;
     if(!strcmp(cur->name,"ID")){
@@ -174,10 +244,12 @@ FieldList* Vardec(Tnode* s,Type* t){
             e->name = cur->s_val;
             e->type = t;
             Insert(e);
+            
         }
         FieldList* ret = malloc(sizeof(FieldList));
         ret->name = cur->s_val;
         ret->type = t;
+        
         return ret;
     }else{
         int size = childth_node(s,3)->i_val;
@@ -189,6 +261,7 @@ FieldList* Vardec(Tnode* s,Type* t){
     }
 }
 Type* Specifier(Tnode* s){
+    sdebug("Specifier\n");
     assert(strcmp(s->name,"Specifier")==0);
     Tnode* cur = s->firstchild;
     Type* t = NULL;
@@ -207,9 +280,10 @@ Type* Specifier(Tnode* s){
     return t;
 }
 Type* Structspecifier(Tnode* s){
+    sdebug("Structspecifier\n");
     assert(strcmp(s->name,"StructSpecifier")==0);
     Tnode* cur = s->firstchild;
-    assert(strcmp(s->name,"STRUCT")==0);
+    assert(strcmp(cur->name,"STRUCT")==0);
     cur=cur->nextbro;
     if(!strcmp(cur->name,"Tag")){
         // STRUCT Tag
@@ -219,8 +293,12 @@ Type* Structspecifier(Tnode* s){
             Error(17,s->line);   //直接使用未定义过的结构体来定义变量。
             return NULL;
         }else{
-            Type* ret = e->type;
-            assert(ret->kind==STRUCTURE);
+            Type* ret = malloc(sizeof(Type));
+            //ret->t = e->type;
+            ret->kind = STRUCTVAR;
+            ret->u.structure = e->type->u.structure;
+            //printf("%d\n",ret->kind);
+            assert(e->type->kind==STRUCTURE);
             return ret;
         }
     }else{
@@ -235,15 +313,22 @@ Type* Structspecifier(Tnode* s){
                 Type* t = malloc(sizeof(Type));
                 t->kind = STRUCTURE;
                 Tnode* node = childth_node(s,4);
-                t->u.structure = Deflist(node,t);
+                t->u.structure = Deflist(node,t,1);
+                e = malloc(sizeof(Element));
+                e->type=t;
+                e->name=id;
                 Insert(e);
-                return t;
+                //CHECK;
+                Type* ret = malloc(sizeof(Type));
+                ret->kind = STRUCTVAR;
+                ret->u.structure = t->u.structure;
+                return ret;
             }
         }else{
             Type* t = malloc(sizeof(Type));
             t->kind = STRUCTURE;
             Tnode* node = childth_node(s,3);
-            t->u.structure = Deflist(node,t);
+            t->u.structure = Deflist(node,t,1);
             return t;
         }
     }
@@ -261,8 +346,349 @@ char* Opttag(Tnode* s){
     return cur->s_val;
 }
 void Compst(Tnode* s,FieldList* f){
-
+    sdebug("Compst\n");
+    assert(strcmp(s->name,"CompSt")==0);
+    Tnode* cur = s->firstchild;
+    cur = cur->nextbro;
+    FieldList* h=NULL;
+    if(!strcmp(cur->name,"DefList")) h=Deflist(cur,f->type,0);
+    else if(!strcmp(cur->name,"StmtList")) Stmtlist(cur,f->type);
+    cur = cur->nextbro;
+    if(cur!=NULL){
+        if(!strcmp(cur->name,"StmtList")) Stmtlist(cur,f->type);
+    }
 }
-FieldList* Deflist(Tnode* s,Type* t){
+FieldList* Deflist(Tnode* s,Type* t,int flag){
+    sdebug("Deflist\n");
+    assert(strcmp(s->name,"DefList")==0);
+    Tnode* cur = s->firstchild;
+    FieldList* f = NULL;
+    if(!strcmp(cur->name,"Def")) f=Def(cur,t,flag);
+    cur = cur->nextbro;
+    if(cur != NULL){
+        assert(!strcmp(cur->name,"DefList"));
+        if(f==NULL) {return Deflist(cur,t,flag);}
+        else{
+            FieldList* tmp =f;
+            while(tmp->next!=NULL) tmp=tmp->next;
+            tmp->next = Deflist(cur,t,flag);
+        }
+    }
+    return f;
+}
+FieldList* Def(Tnode* s,Type* t,int flag){
+    sdebug("Def\n");
+    assert(strcmp(s->name,"Def")==0);
+    Tnode* cur = s->firstchild;
+    Type* def = NULL;
+    if(!strcmp(cur->name,"Specifier")) {
+        def = Specifier(cur);
+        if(def==NULL) return NULL;
+    }
+    if(def->kind==STRUCTURE) def->kind==STRUCTVAR;
+    cur = cur->nextbro;
+    if(cur!=NULL){
+        assert(strcmp(cur->name,"DecList")==0);
+        return Declist(cur,def,flag);
+    }
+    
+}
+FieldList* Declist(Tnode* s,Type* t,int flag){
+    sdebug("Declist\n");
+    assert(strcmp(s->name,"DecList")==0);
+    Tnode* cur = s->firstchild;
+    FieldList *f=NULL;
+    if(!strcmp(cur->name,"Dec")) f = Dec(cur,t,flag);
+    cur = cur->nextbro;
+    if(cur!=NULL){
+        cur = cur->nextbro;
+        assert(!strcmp(cur->name,"DecList"));
+        if(f==NULL) {return Declist(cur,t,flag);}
+        else{
+            f->next = Declist(cur,t,flag);
+        }
+    }
+    //CHECK;
+    return f;
+}
+FieldList* Dec(Tnode* s,Type* t,int flag){
+    sdebug("Dec\n");
+    assert(strcmp(s->name,"Dec")==0);
+    Tnode* cur = s->firstchild;
+    FieldList* f=NULL;
+    if(!strcmp(cur->name,"VarDec")){
+        f=Vardec(cur,t);
+    }
+    cur=cur->nextbro;
+    if(cur!=NULL){
+        if(flag) {Error(15,cur->line);return f;}//结构体中域名重复定义（指同一结构体中），或在定义时对域进
+                                    //行初始化（例如struct A { int a = 0; }）。
+        //Error
+        Type* tt = Exp(cur->nextbro);
+        if(tt!=NULL){
+            if(tt->kind!=f->type->kind){
+                Error(5,cur->line);
+            }
+        }
+    }
+    
+    return f;
+}
+void Stmtlist(Tnode* s,Type* t){
+    sdebug("Stmtlist\n");
+    assert(strcmp(s->name,"StmtList")==0);
+    Tnode* cur = s->firstchild;
+    if(!strcmp(cur->name,"Stmt")) Stmt(cur,t);
+    cur = cur->nextbro;
+    if(cur!=NULL){
+        Stmtlist(cur,t);
+    }
+}
+void Stmt(Tnode* s,Type* t){
+    sdebug("Stmt\n");
+    assert(strcmp(s->name,"Stmt")==0);
+    Tnode* cur = s->firstchild;
+    FieldList* f =malloc(sizeof(FieldList));
+    f->type=t;
+    if(!strcmp(cur->name,"Exp")){
+        Exp(cur);//
+    }else if(!strcmp(cur->name,"CompSt")){
+        Compst(cur,f);//
+    }else if(!strcmp(cur->name,"RETURN")){
+        //
+        Type* tt = Exp(cur->nextbro);
+        if(!equvilence(tt,t->u.func.retval)){
+            Error(8,cur->line);   //return语句的返回类型与函数定义的返回类型不匹配。
+        }
+    }else if(!strcmp(cur->name,"IF")){
+        //
+        Type* tt = Exp(childth_node(s,3));
+        if(tt!=NULL&&(tt->kind!=BASIC||tt->u.basic!=1)){
+            Error(7,cur->line);
+        }
+        cur = childth_node(s,5);
+        Stmt(cur,t);
+        cur=cur->nextbro;
+        if(cur!=NULL){
+            cur=cur->nextbro;
+            assert(strcmp(cur->name,"Stmt")==0);
+            Stmt(cur,t);
+        }
+    }else{//WHILE
+        assert(strcmp(cur->name,"WHILE"));
+        //
+        Type* tt = Exp(childth_node(s,3));
+        if(tt->kind!=BASIC||tt->u.basic!=1){
+            Error(7,cur->line);
+        }
+        Stmt(childth_node(s,5),t);
+    }
+}
+Type* Exp(Tnode* s){
+    sdebug("Exp\n");
+    assert(strcmp(s->name,"Exp")==0);
+    Tnode* cur = s->firstchild;
+    if(!strcmp(cur->name,"INT")){
+        Type* t = malloc(sizeof(Type));
+        t->kind = BASIC;
+        t->u.basic = 1;
+        return t;
+    }else if(!strcmp(cur->name,"FLOAT")){
+        Type* t = malloc(sizeof(Type));
+        t->kind = BASIC;
+        t->u.basic = 2;
+        return t;
+    }else if(!strcmp(cur->name,"LP")){
+        cur = cur->nextbro;
+        return Exp(cur);
+    }else if(!strcmp(cur->name,"ID")){
+        if(cur->nextbro==NULL){       //ID 
+            char *id = cur->s_val;
+            Element* e = Search(id);
+            if(e ==NULL ){
+                Error(1,cur->line);   //变量在使用时未经定义。
+                return NULL;
+            }else{
+                return e->type;
+            }
+        }else{
+            if(!strcmp(childth_node(s,3)->name,"Args")){  //ID LP Args RP
+                char *id = cur->s_val;
+                Element* e = Search(id);
+                if(e==NULL){
+                    Error(2,cur->line);//函数在调用时未经定义。
+                    return NULL;
+                }else{
+                    switch(e->type->kind){
+                        case BASIC:case STRUCTVAR:case ARRAY:
+                            Error(11,cur->line);//对普通变量使用“(…)”或“()”（函数调用）操作符。
+                            return NULL;
+                            break;
+                        case FUNC:{
+                            Tnode* tmp=childth_node(s,3);
+                            FieldList* f=Args(tmp);
+                            if(f==NULL) return NULL;
+                            FieldList* ff = e->type->u.func.args;
+                            int flag=0;
+                            while(f!=NULL&&ff!=NULL){         //判断函数的实参和形参是否等价
+                                if(!equvilence(f->type,ff->type)) flag=1;
+                                f=f->next;
+                                ff=ff->next;
+                            }
+                            if(f!=NULL||ff!=NULL) flag=1;
+                            if(flag){
+                                Error(9,cur->line); //函数调用时实参与形参的数目或类型不匹配。
+                                return NULL;
+                            }
+                            break;
+                        }
+                            
+                        default: sdebug("Undefined error\n");return NULL;
+                    }
+                    return e->type->u.func.retval;
+                }
+            }else{                        //ID LP RP 
+                char *id = cur->s_val;
+                Element* e = Search(id);
+                if(e==NULL){
+                    Error(2,cur->line);//函数在调用时未经定义。
+                    return NULL;
+                }else{
+                    switch(e->type->kind){
+                        case BASIC:case STRUCTVAR:case ARRAY:
+                            Error(11,cur->line);//对普通变量使用“(…)”或“()”（函数调用）操作符。
+                            return NULL;
+                            break;
+                        case FUNC:
+                            if(e->type->u.func.num!=0){
+                                Error(8,cur->line); //函数调用时实参与形参的数目或类型不匹配。
+                                return NULL;
+                            }
+                            break;
+                        default: sdebug("Undefined error\n");return NULL;
+                    }
+                    return e->type->u.func.retval;
+                }
+            }
+            
+        }
+    }else if(!strcmp(cur->name,"MINUS")){
 
+    }else if(!strcmp(cur->name,"NOT")){
+        cur = cur->nextbro;
+        assert(strcmp(cur->name,"Exp"));
+        Type* t = Exp(cur);
+        if(t==NULL) return NULL;
+        if(t->kind!=BASIC || t->u.basic!=1){
+            Error(7,cur->line);
+            return NULL;
+        }
+        return t;
+    }else if(!strcmp(cur->name,"Exp")){
+        Tnode* op=cur->nextbro;
+        if(!strcmp(op->name,"LB")){
+            Type* tt = Exp(op->nextbro);
+            if(tt == NULL) return NULL;
+            if(tt->kind!=BASIC || tt->u.basic!=1){
+                Error(12,cur->line);  //数组访问操作符“[…]”中出现非整数（例如a[1.5]）。
+                return NULL;
+            }
+            Type* t = Exp(cur);
+            if(t == NULL) return NULL;
+            if(t->kind!=ARRAY){
+                Error(10,cur->line);  //对非数组型变量使用“[…]”（数组访问）操作符。
+                return NULL;
+            }
+            return t->u.array.elem;
+        }else if(!strcmp(op->name,"DOT")){
+            char* id=op->nextbro->s_val;
+            Type* t=Exp(cur);
+            if(t==NULL){return NULL;}
+            if(t->kind!=STRUCTVAR){
+                //CHECK;
+                Error(13,cur->line);  //对非结构体型变量使用“.”操作符。
+                return NULL;
+            }else{
+                FieldList* struc = t->u.structure;
+                int flag=1;
+                while(struc!=NULL){
+                    if(strcmp(struc->name,id)==0) {flag=0;break;}
+                    struc = struc->next;
+                }
+                if(flag){
+                    Error(14,cur->line);//访问结构体中未定义过的域。
+                    return NULL;
+                }
+                return struc->type;
+            }
+        }else if(!strcmp(op->name,"OR")||!strcmp(op->name,"AND")){
+            Type* t1 = Exp(cur);
+            Type* t2 = Exp(op->nextbro);
+            if(t1==NULL || t2==NULL){return NULL;}
+            if(t1->kind!=BASIC || t1->u.basic!=1 || t2->kind!=BASIC||t2->u.basic!=1){
+                Error(7,cur->line);
+                return NULL;
+            }
+            return t1;
+
+        }else if(!strcmp(op->name,"RELOP")){
+            Type* t1 = Exp(cur);
+            Type* t2 = Exp(op->nextbro);
+            if(t1==NULL || t2==NULL){return NULL;}
+            if(t1->kind!=BASIC || t2->kind!=BASIC){
+                Error(7,cur->line);
+                return NULL;
+            }
+            Type* ret = malloc(sizeof(Type));
+            ret->kind = BASIC;
+            ret->u.basic = 1;   //  比较运算返回int类型
+            return t1;
+
+        }else if(!strcmp(op->name,"PLUS")||!strcmp(op->name,"MINUS") ||!strcmp(op->name,"STAR") ||!strcmp(op->name,"DIV")){
+            Type* t1 = Exp(cur);
+            Type* t2 = Exp(op->nextbro);
+            if(t1==NULL || t2==NULL){return NULL;}
+            if((equvilence(t1,t2))&&(t1->kind==BASIC)){
+                return t1;
+            }
+            Error(7,cur->line);
+            return NULL;
+        }else if(!strcmp(op->name,"ASSIGNOP")){  //赋值运算 ，比较复杂
+            if(judge(cur,1,"ID")==0&&judge(cur,4,"Exp","LB","Exp","RB")==0&&judge(cur,3,"Exp","DOT","ID")==0){
+                Error(6,cur->line); //赋值号左边出现一个只有右值的表达式。
+                return NULL;
+            }
+            Type* t1 = Exp(cur);
+            Type* t2 = Exp(op->nextbro);
+            if(t1==NULL || t2==NULL){return NULL;}
+            if(!equvilence(t1,t2)){
+                //此处的类型匹配还需要考虑数组和结构体
+                Error(5,cur->line);  //赋值号两边的表达式类型不匹配。
+                return NULL;
+            }
+            return t1;
+            //error 6
+        }else{
+            printf("Undefined error:%d\n",cur->line);
+            return NULL;
+        }
+
+    }
+    printf("Undefined error:%d\n",cur->line);
+    return NULL;
+}
+FieldList* Args(Tnode* s){
+    sdebug("Args\n");
+    assert(strcmp(s->name,"Args")==0);
+    Tnode* cur = s->firstchild;
+    Type* t = Exp(cur);
+    if(t==NULL) return NULL;
+    FieldList *f = malloc(sizeof(FieldList));
+    f->type=t;
+    cur=cur->nextbro;
+    if(cur!=NULL){
+        cur=cur->nextbro;
+        f->next = Args(cur);
+    }
+    return f;
 }

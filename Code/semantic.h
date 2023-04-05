@@ -1,5 +1,5 @@
 #include "N_tree.h"
-#define HASHSIZE 1024
+#define HASHSIZE 16384
 typedef struct Type_ Type;
 typedef struct FieldList_ FieldList;
 typedef struct Element_ Element;
@@ -44,7 +44,11 @@ unsigned int hash_pjw(char* );
 Element* Search(char* );
 void Insert(Element* );
 void Delete(Element* );
+void inithash();
+void printhash();
 
+
+int equvilence(Type* t1,Type* t2);
 //SDT
 void semantic(Tnode* );
 void Program(Tnode* s);
@@ -60,4 +64,11 @@ Type* Structspecifier(Tnode* s);
 char* Tag(Tnode* s);
 char* Opttag(Tnode* s);
 void Compst(Tnode* s,FieldList* f);
-FieldList* Deflist(Tnode* s,Type* t);
+FieldList* Deflist(Tnode* s,Type* t,int flag);
+FieldList* Def(Tnode* s,Type* t,int flag);
+FieldList* Declist(Tnode* s,Type* t,int flag);
+FieldList* Dec(Tnode* s,Type* t,int flag);
+void Stmtlist(Tnode* s,Type* t);
+void Stmt(Tnode* s,Type* t);
+Type* Exp(Tnode* s);
+FieldList* Args(Tnode* s);
