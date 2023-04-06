@@ -53,16 +53,17 @@ void printhash();
 
 
 int equvilence(Type* t1,Type* t2);
+void checkfunc(FieldList* f);
 //SDT
 void semantic(Tnode* );
 void Program(Tnode* s);
-void Extdeflist(Tnode *s);
-void Extdef(Tnode* s);
+FieldList* Extdeflist(Tnode *s);
+FieldList* Extdef(Tnode* s);
 FieldList* Fundec(Tnode* s,Type* t,int state);
 FieldList* Varlist(Tnode* s);
 FieldList* Paramdec(Tnode* s);
-void Extdeclist(Tnode* s,Type* t);
-FieldList* Vardec(Tnode* s,Type* t);
+FieldList* Extdeclist(Tnode* s,Type* t);
+FieldList* Vardec(Tnode* s,Type* t,int flag);
 Type* Specifier(Tnode* s);
 Type* Structspecifier(Tnode* s);
 char* Tag(Tnode* s);

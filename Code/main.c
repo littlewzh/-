@@ -19,10 +19,8 @@ int main(int argc, char** argv){
     //yydebug = 1;//用于bison调试
     yyparse();//对输入文件进行语法分析
     if(!errorflag){
-        dfs(root,0);
-        inithash();
-        Program(root);
-        printhash();
+        //dfs(root,0);
+        semantic(root); 
     }
     
 
