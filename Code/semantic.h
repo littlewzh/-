@@ -51,8 +51,10 @@ void Insert(Element* );
 void Delete(Element* );
 void inithash();
 void printhash();
-Element* createlement(char* n,Type* t,int d);
+Element* createlement(char* n,Type* t,int d,int l);
 FieldList* creatFieldList(char* s,Type* t,FieldList* ne);
+
+
 int equvilence(Type* t1,Type* t2);
 void checkfunc(FieldList* f);
 //SDT
@@ -64,7 +66,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state);
 FieldList* Varlist(Tnode* s);
 FieldList* Paramdec(Tnode* s);
 FieldList* Extdeclist(Tnode* s,Type* t);
-FieldList* Vardec(Tnode* s,Type* t,int flagType);
+FieldList* Vardec(Tnode* s,Type* t,int flag);
 Type* Specifier(Tnode* s);
 Type* Structspecifier(Tnode* s);
 char* Tag(Tnode* s);

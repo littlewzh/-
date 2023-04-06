@@ -1,6 +1,12 @@
 #include "semantic.h"
 
 #define Error(n,line) printf("Error type %d at Line %d:\n",n,line)
+//#define CHECKHASHTABLE
+#ifdef CHECKHASHTABLE
+#define PRINTTABLE printhash();
+#else
+#define PRINTTABLE assert(1)
+#endif
 //#define SEMANTIC
 #ifdef SEMANTIC
 #define sdebug(...) printf(__VA_ARGS__)
@@ -35,16 +41,22 @@ void inithash(){
     }
 }
 void printhash(){
-    printf("HASHTABLE ELEMENT\n");
+    printf("|--------------------------|\n");
+    printf("| HASHTABLE ELEMENT        |\n"); //26
+    printf("|--------------------------|\n");
+    printf("| %-8s| %-5s| %-6s  |\n","name","type","line");
+    printf("|--------------------------|\n");
     for(int i=0;i<= HASHSIZE;i++){
         if(Hashtable[i]!=NULL){
             Element* e = Hashtable[i];
             while(e!=NULL){
-                printf("%s  %d\n",e->name,e->type->kind);
+    printf("| %-8s| %-5d| %-6d  |\n",e->name,e->type->kind,e->line);
                 e = e->next;
             }
         }
     }
+    printf("|--------------------------|\n");
+    printf("\n");
 }
 FieldList* creatFieldList(char* s,Type* t,FieldList* ne){
     FieldList* f = malloc(sizeof(FieldList));
@@ -53,11 +65,13 @@ FieldList* creatFieldList(char* s,Type* t,FieldList* ne){
     f->type = t;
     return f;
 }
-Element* createlement(char* n,Type* t,int d){
+Element* createlement(char* n,Type* t,int d,int l){
     Element* e = malloc(sizeof(Element));
     e->name=n;
     e->type=t;
     e->dep=d;
+    e->line=l;
+    return e;
 }
 Element* Search(char* name){
     unsigned int key=hash_pjw(name);
@@ -173,16 +187,13 @@ int judge(Tnode* s,int num,...){  //判断某个结点的子产生式是否为�
     if(cur!=NULL) return 0;
     return 1;
 }
+
 void semantic(Tnode *s){
     Dep=0;
     inithash();
     Program(s);
-    #ifdef SEMANTIC
-    printhash();
-    #endif
+    PRINTTABLE;
 }
-
-
 
 void Program(Tnode* s){
     sdebug("program\n");
@@ -235,13 +246,15 @@ FieldList* Extdef(Tnode* s){
             if(!strcmp(cur->nextbro->name,"SEMI")){
             //Specifier FunDec SEMI
                 f=Fundec(cur,def,0); //声明
+                PRINTTABLE;
                 if(f!=NULL){ CLEARSCOPE(f->type->u.func.args)} //作用域相关
             }else{
             //Specifier FunDec CompSt
                 f=Fundec(cur,def,1);  //定义
                 if(f==NULL) return NULL;
                 cur = cur->nextbro;
-                Compst(cur,f); 
+                Compst(cur,f);
+                PRINTTABLE;
                 if(f!=NULL){ CLEARSCOPE(f->type->u.func.args)}  //作用域相关
                //CHECK;
             }
@@ -298,8 +311,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
                 l=l->next;
             }
         }
-        e = createlement(s->firstchild->s_val,fun,Dep);
-        e->line = cur->line;
+        e = createlement(s->firstchild->s_val,fun,Dep,cur->line);
         Insert(e);   //将该符号插入符号表
         FieldList* ret = creatFieldList(e->name,fun,NULL); //构造返回类型（函数名，函数类型）
         return ret;
@@ -363,7 +375,7 @@ FieldList* Vardec(Tnode* s,Type* t,int flag){ //flag==1 结构体 ；flag==0 函
                     break;
                 }else{           //此时虽然符号名重复，但由于作用域的影响，不冲突
                     assert(e->dep<Dep);   
-                    Element* new_e = createlement(cur->s_val,t,Dep);
+                    Element* new_e = createlement(cur->s_val,t,Dep,cur->line);
                     Insert(new_e);    //插入符号表
                     FieldList* ret = creatFieldList(cur->s_val,t,NULL);//构造返回类性（ID+类型）
                     return ret;
@@ -377,7 +389,7 @@ FieldList* Vardec(Tnode* s,Type* t,int flag){ //flag==1 结构体 ；flag==0 函
             }
             return NULL;
         }else{             //在哈希表中没有同名符号
-            e = createlement(cur->s_val,t,Dep);
+            e = createlement(cur->s_val,t,Dep,cur->line);
             Insert(e);
             FieldList* ret = creatFieldList(cur->s_val,t,NULL);
             return ret;
@@ -446,8 +458,9 @@ Type* Structspecifier(Tnode* s){
                 Dep++;
                 t->u.structure = Deflist(node,t,1);
                 Dep--;
+                PRINTTABLE;
                 CLEARSCOPE(t->u.structure)
-                e = createlement(id,t,Dep);
+                e = createlement(id,t,Dep,cur->line);
                 Insert(e);
                 //CHECK;
                 Type* ret = malloc(sizeof(Type));
@@ -462,6 +475,7 @@ Type* Structspecifier(Tnode* s){
             Dep++;
             t->u.structure = Deflist(node,t,1);
             Dep--;
+            PRINTTABLE;
             CLEARSCOPE(t->u.structure)
             return t;
         }
@@ -493,6 +507,7 @@ void Compst(Tnode* s,FieldList* f){
         if(!strcmp(cur->name,"StmtList")) Stmtlist(cur,f->type);
     }
     Dep--;
+    PRINTTABLE;
     CLEARSCOPE(h)
 }
 FieldList* Deflist(Tnode* s,Type* t,int flag){
