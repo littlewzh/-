@@ -31,7 +31,7 @@ struct Type_{
     } u;
 };
 struct FieldList_{
-    char* name;    //域的名字
+    char* name;     //域的名字
     Type* type;     //域的类型
     FieldList* next;//下一个
 };
@@ -40,6 +40,7 @@ struct Element_{
     Type* type;
     Element* next;
     int dep;          //符号的深度
+    int line;         //符号所在行
 };
 
 
@@ -50,8 +51,8 @@ void Insert(Element* );
 void Delete(Element* );
 void inithash();
 void printhash();
-
-
+Element* createlement(char* n,Type* t,int d);
+FieldList* creatFieldList(char* s,Type* t,FieldList* ne);
 int equvilence(Type* t1,Type* t2);
 void checkfunc(FieldList* f);
 //SDT
@@ -63,7 +64,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state);
 FieldList* Varlist(Tnode* s);
 FieldList* Paramdec(Tnode* s);
 FieldList* Extdeclist(Tnode* s,Type* t);
-FieldList* Vardec(Tnode* s,Type* t,int flag);
+FieldList* Vardec(Tnode* s,Type* t,int flagType);
 Type* Specifier(Tnode* s);
 Type* Structspecifier(Tnode* s);
 char* Tag(Tnode* s);

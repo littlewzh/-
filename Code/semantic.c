@@ -8,6 +8,16 @@
 #define sdebug(...) assert(1)
 #endif
 #define CHECK printf("here\n")
+//清除该作用域中定义的变量
+#define CLEARSCOPE(f) \
+    if(f!=NULL){      \
+        FieldList* tmp=f; \
+        while(tmp!=NULL){  \
+            Element* e = Search(tmp->name);\
+            Delete(e);    \
+            tmp=tmp->next; \
+        }\
+    }
 //extern struct treenode;
 Element* Hashtable[HASHSIZE+1];
 int Dep;  //用于实现作用与
@@ -35,6 +45,19 @@ void printhash(){
             }
         }
     }
+}
+FieldList* creatFieldList(char* s,Type* t,FieldList* ne){
+    FieldList* f = malloc(sizeof(FieldList));
+    f->name = s;
+    f->next = ne;
+    f->type = t;
+    return f;
+}
+Element* createlement(char* n,Type* t,int d){
+    Element* e = malloc(sizeof(Element));
+    e->name=n;
+    e->type=t;
+    e->dep=d;
 }
 Element* Search(char* name){
     unsigned int key=hash_pjw(name);
@@ -121,13 +144,13 @@ int equvilence(Type* t1,Type* t2){
     }
 
 }
-void checkfunc(FieldList* f){  //检查函数定义
+void checkfunc(FieldList* f){  //检查函数是否定义
     if(f!=NULL){
         while(f!=NULL){
             Element* e = Search(f->name);
             if(e!=NULL && e->type->kind==FUNC){
                 if(e->type->u.func.state!=DEF){
-                    Error(18,1);//函数进行了声明，但没有被定义。
+                    Error(18,e->line);//函数进行了声明，但没有被定义。
                     return ;
                 }
             }
@@ -208,40 +231,25 @@ FieldList* Extdef(Tnode* s){
             //Specifier ExtDecList SEMI
             return Extdeclist(cur,def);
         }else{
+            FieldList* f=NULL;
             if(!strcmp(cur->nextbro->name,"SEMI")){
-                //Specifier FunDec SEMI
-                FieldList* f=Fundec(cur,def,0); //声明
-                if(f!=NULL){                   //作用域相关
-                    FieldList* tmp=f->type->u.func.args;
-                    while(tmp!=NULL){
-                        Element* e = Search(tmp->name);
-                        Delete(e);
-                        tmp=tmp->next;
-                    }
-                }
-                return f;
+            //Specifier FunDec SEMI
+                f=Fundec(cur,def,0); //声明
+                if(f!=NULL){ CLEARSCOPE(f->type->u.func.args)} //作用域相关
             }else{
             //Specifier FunDec CompSt
-               FieldList* f=Fundec(cur,def,1);  //定义
-               if(f==NULL) return NULL;
-               cur = cur->nextbro;
-               Compst(cur,f); 
-               if(f!=NULL){                   //作用域相关
-                    FieldList* tmp=f->type->u.func.args;
-                    while(tmp!=NULL){
-                        Element* e = Search(tmp->name);
-                        Delete(e);
-                        tmp=tmp->next;
-                    }
-                }
+                f=Fundec(cur,def,1);  //定义
+                if(f==NULL) return NULL;
+                cur = cur->nextbro;
+                Compst(cur,f); 
+                if(f!=NULL){ CLEARSCOPE(f->type->u.func.args)}  //作用域相关
                //CHECK;
-               return f;
             }
-            
+            return f;
         }
     }
 }
-FieldList* Fundec(Tnode* s,Type* t,int state){
+FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声明
     sdebug("Fundec\n");
     assert(strcmp(s->name,"FunDec")==0);
     Tnode* cur = s->firstchild;
@@ -251,8 +259,8 @@ FieldList* Fundec(Tnode* s,Type* t,int state){
             Error(4,cur->line); //函数出现重复定义（即同样的函数名出现了不止一次定义
             return NULL;
         }else if(e->type->kind==FUNC &&e->type->u.func.state==DEC_UNDEF){
-            Type* t1=e->type;
-            Type* t2 = malloc(sizeof(Type));
+            Type* t1=e->type;              //符号表里的函数类型
+            Type* t2 = malloc(sizeof(Type));  //分析当前节点的函数类型
             t2->kind = FUNC;
             t2->u.func.retval=t;
             t2->u.func.num=0;
@@ -270,9 +278,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state){
                 return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
             }
             e->type->u.func.state = state ? DEF:DEC_UNDEF;
-            FieldList* ret = malloc(sizeof(FieldList));
-            ret->name = e->name;
-            ret->type = t1;
+            FieldList* ret = creatFieldList(e->name,t1,NULL); //构造返回类型（函数名，函数类型）
             return ret;
         }
     }else{  //hash表里没有该符号名
@@ -292,13 +298,10 @@ FieldList* Fundec(Tnode* s,Type* t,int state){
                 l=l->next;
             }
         }
-        e = malloc(sizeof(Element));
-        e->name = s->firstchild->s_val;
-        e->type = fun;
-        Insert(e);
-        FieldList* ret = malloc(sizeof(FieldList));
-        ret->name = e->name;
-        ret->type = fun;
+        e = createlement(s->firstchild->s_val,fun,Dep);
+        e->line = cur->line;
+        Insert(e);   //将该符号插入符号表
+        FieldList* ret = creatFieldList(e->name,fun,NULL); //构造返回类型（函数名，函数类型）
         return ret;
     }
 }
@@ -306,7 +309,7 @@ FieldList* Varlist(Tnode* s){
     sdebug("Varlist\n");
     assert(strcmp(s->name,"VarList")==0);
     Tnode* cur = s->firstchild;
-    FieldList *l = malloc(sizeof(FieldList));
+    FieldList *l = NULL;
     l = Paramdec(cur);
     cur = cur->nextbro;
     if(cur!=NULL){
@@ -321,7 +324,6 @@ FieldList* Paramdec(Tnode* s){
     Tnode* cur = s->firstchild;
     Type *def = Specifier(cur);
     cur = cur->nextbro;
-
     return Vardec(cur,def,0);
 }
 FieldList* Extdeclist(Tnode* s,Type* t){
@@ -346,31 +348,26 @@ FieldList* Vardec(Tnode* s,Type* t,int flag){ //flag==1 结构体 ；flag==0 函
     sdebug("Vardec\n");
     assert(strcmp(s->name,"VarDec")==0);
     Tnode *cur = s->firstchild;
-    if(!strcmp(cur->name,"ID")){
+    if(!strcmp(cur->name,"ID")){         
         Element* e=Search(cur->s_val);
-        if(e!=NULL){
-            switch (t->kind){
+        if(e!=NULL){                 //在哈希表中查到同名符号
+            switch (t->kind){        //分析当前符号的类型
             case BASIC:
             case STRUCTVAR:
             case ARRAY:
-            {
+            {   //当前符号为变量类型（普通变量，数组变量，结构体变量）
                 //assert(e->dep>Dep);
-                if(e->dep == Dep || e->type->kind==STRUCTURE){
+                if(e->dep == Dep || e->type->kind==STRUCTURE){  //当前变量与之前的符号位于同一层作用域，或着之前的符号为结构体名
                     if(flag==0) Error(3,cur->line);//变量出现重复定义，或变量与前面定义过的结构体名字重复。
                     else Error(15,cur->line);  //结构体中域名重复定义（指同一结构体中）
                     break;
-                }else{
-                    Element* new_e = malloc(sizeof(Element));
-                    new_e->name = cur->s_val;
-                    new_e->type = t;
-                    new_e->dep = Dep;
-                    Insert(new_e); 
-                    FieldList* ret = malloc(sizeof(FieldList));
-                    ret->name = cur->s_val;
-                    ret->type = t;
+                }else{           //此时虽然符号名重复，但由于作用域的影响，不冲突
+                    assert(e->dep<Dep);   
+                    Element* new_e = createlement(cur->s_val,t,Dep);
+                    Insert(new_e);    //插入符号表
+                    FieldList* ret = creatFieldList(cur->s_val,t,NULL);//构造返回类性（ID+类型）
                     return ret;
                 }
-                
             }
             case STRUCTURE:   //???????????????
                 Error(16,cur->line);//结构体的名字与前面定义过的结构体或变量的名字重复。
@@ -379,20 +376,14 @@ FieldList* Vardec(Tnode* s,Type* t,int flag){ //flag==1 结构体 ；flag==0 函
                 break;
             }
             return NULL;
-        }else{
-            e = malloc(sizeof(Element));
-            e->name = cur->s_val;
-            e->type = t;
-            e->dep=Dep;
+        }else{             //在哈希表中没有同名符号
+            e = createlement(cur->s_val,t,Dep);
             Insert(e);
-            
+            FieldList* ret = creatFieldList(cur->s_val,t,NULL);
+            return ret;
         }
-        FieldList* ret = malloc(sizeof(FieldList));
-        ret->name = cur->s_val;
-        ret->type = t;
-        
-        return ret;
-    }else{
+        assert(0);
+    }else{  //数组类型变量
         int size = childth_node(s,3)->i_val;
         Type* new_t = malloc(sizeof(new_t));
         new_t->kind = ARRAY;
@@ -434,11 +425,9 @@ Type* Structspecifier(Tnode* s){
             Error(17,s->line);   //直接使用未定义过的结构体来定义变量。
             return NULL;
         }else{
-            Type* ret = malloc(sizeof(Type));
-            //ret->t = e->type;
+            Type* ret = malloc(sizeof(Type));  //构造返回类型
             ret->kind = STRUCTVAR;
             ret->u.structure = e->type->u.structure;
-            //printf("%d\n",ret->kind);
             assert(e->type->kind==STRUCTURE);
             return ret;
         }
@@ -457,17 +446,8 @@ Type* Structspecifier(Tnode* s){
                 Dep++;
                 t->u.structure = Deflist(node,t,1);
                 Dep--;
-                if(t->u.structure!=NULL){                   //作用域相关
-                    FieldList* tmp=t->u.structure;
-                    while(tmp!=NULL){
-                        Element* e = Search(tmp->name);
-                        Delete(e);
-                        tmp=tmp->next;
-                    }
-                }
-                e = malloc(sizeof(Element));
-                e->type=t;
-                e->name=id;
+                CLEARSCOPE(t->u.structure)
+                e = createlement(id,t,Dep);
                 Insert(e);
                 //CHECK;
                 Type* ret = malloc(sizeof(Type));
@@ -482,14 +462,7 @@ Type* Structspecifier(Tnode* s){
             Dep++;
             t->u.structure = Deflist(node,t,1);
             Dep--;
-            if(t->u.structure!=NULL){                   //作用域相关
-                    FieldList* tmp=t->u.structure;
-                    while(tmp!=NULL){
-                        Element* e = Search(tmp->name);
-                        Delete(e);
-                        tmp=tmp->next;
-                    }
-                }
+            CLEARSCOPE(t->u.structure)
             return t;
         }
     }
@@ -520,14 +493,7 @@ void Compst(Tnode* s,FieldList* f){
         if(!strcmp(cur->name,"StmtList")) Stmtlist(cur,f->type);
     }
     Dep--;
-    if(h!=NULL){
-         FieldList* tmp=h;
-         while(tmp!=NULL){
-             Element* e = Search(tmp->name);
-             Delete(e);
-             tmp=tmp->next;
-         }
-    }
+    CLEARSCOPE(h)
 }
 FieldList* Deflist(Tnode* s,Type* t,int flag){
     sdebug("Deflist\n");
