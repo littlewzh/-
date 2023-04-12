@@ -580,7 +580,7 @@ FieldList* Dec(Tnode* s,Type* t,int flag){
         //Error
         Type* tt = Exp(cur->nextbro);
         if(tt!=NULL){
-            if(tt->kind!=f->type->kind){
+            if(!equvilence(tt,f->type)){
                 Error(5,cur->line);
             }
         }
