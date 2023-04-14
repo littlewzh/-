@@ -378,7 +378,7 @@ FieldList* Extdeclist(Tnode* s,Type* t){
     if(cur!=NULL){
         // VarDec COMMA ExtDecList
         cur=cur->nextbro;
-        assert(strcmp(cur->name,"ExtDecList"));
+        assert(!strcmp(cur->name,"ExtDecList"));
         if(f==NULL) {return Extdeclist(cur,t);}
         else{
             f->next = Extdeclist(cur,t);
@@ -502,7 +502,7 @@ Type* Structspecifier(Tnode* s){
             }
         }else{
             Type* t = malloc(sizeof(Type));
-            t->kind = STRUCTURE;
+            t->kind = STRUCTVAR;
             Tnode* node = childth_node(s,3);
             if(!strcmp(node->name,"DefList")){
                 Dep++;
@@ -770,7 +770,7 @@ Type* Exp(Tnode* s){
         return tt;
     }else if(!strcmp(cur->name,"NOT")){
         cur = cur->nextbro;
-        assert(strcmp(cur->name,"Exp"));
+        assert(!strcmp(cur->name,"Exp"));
         Type* t = Exp(cur);
         if(t==NULL) return NULL;
         if(t->kind!=BASIC || t->u.basic!=1){
