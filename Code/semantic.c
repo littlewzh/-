@@ -20,7 +20,7 @@
         FieldList* tmp=f; \
         while(tmp!=NULL){  \
             Element* e = Search(tmp->name);\
-            Delete(e);    \
+            if(e!=NULL) Delete(e);    \
             tmp=tmp->next; \
         }\
     }
@@ -289,6 +289,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
                 }
                 if(!equvilence(t1,t2)){
                     Error(19,cur->line);//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
+                    CLEARSCOPE(t2->u.func.args)
                     return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
                 }
                 //e->type->u.func.state = state ? DEF:DEC_UNDEF;
@@ -484,11 +485,13 @@ Type* Structspecifier(Tnode* s){
                 Type* t = malloc(sizeof(Type));
                 t->kind = STRUCTURE;
                 Tnode* node = childth_node(s,4);
-                Dep++;
-                t->u.structure = Deflist(node,t,1);
-                Dep--;
-                PRINTTABLE;
-                CLEARSCOPE(t->u.structure)
+                if(!strcmp(node->name,"DefList")){
+                    Dep++;
+                    t->u.structure = Deflist(node,t,1);
+                    Dep--;
+                    PRINTTABLE;
+                    CLEARSCOPE(t->u.structure)
+                }
                 e = createlement(id,t,Dep,cur->line);
                 Insert(e);
                 //CHECK;
@@ -501,11 +504,13 @@ Type* Structspecifier(Tnode* s){
             Type* t = malloc(sizeof(Type));
             t->kind = STRUCTURE;
             Tnode* node = childth_node(s,3);
-            Dep++;
-            t->u.structure = Deflist(node,t,1);
-            Dep--;
-            PRINTTABLE;
-            CLEARSCOPE(t->u.structure)
+            if(!strcmp(node->name,"DefList")){
+                Dep++;
+                t->u.structure = Deflist(node,t,1);
+                Dep--;
+                PRINTTABLE;
+                CLEARSCOPE(t->u.structure)
+            }
             return t;
         }
     }

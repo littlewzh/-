@@ -6,3 +6,6 @@ int func1(int a){
     return 1;
 }
 int func1(float a);
+struct a{
+
+};
