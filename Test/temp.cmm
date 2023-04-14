@@ -1,0 +1,8 @@
+int func(int a);
+int func(int b){
+    return 1;
+}
+int func1(int a){
+    return 1;
+}
+int func1(float a);

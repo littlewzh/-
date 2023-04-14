@@ -268,9 +268,35 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
     Tnode* cur = s->firstchild;
     Element* e = Search(cur->s_val);
     if(e!=NULL){    //hash表里有相同的函数名
-        if(e->type->kind==FUNC && e->type->u.func.state==DEF&&state){
-            Error(4,cur->line); //函数出现重复定义（即同样的函数名出现了不止一次定义
-            return NULL;
+        if(e->type->kind==FUNC && e->type->u.func.state==DEF){
+            if(state){
+                Error(4,cur->line); //函数出现重复定义（即同样的函数名出现了不止一次定义
+                return NULL;
+            }else{
+                Type* t1=e->type;              //符号表里的函数类型
+                Type* t2 = malloc(sizeof(Type));  //分析当前节点的函数类型
+                t2->kind = FUNC;
+                t2->u.func.retval=t;
+                t2->u.func.num=0;
+                cur = childth_node(s,3);
+                if(!strcmp(cur->name,"VarList")){
+                    FieldList *l = Varlist(cur);
+                    t2->u.func.args = l;
+                    while(l!=NULL){
+                        t2->u.func.num++;
+                        l=l->next;
+                    }
+                }
+                if(!equvilence(t1,t2)){
+                    Error(19,cur->line);//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
+                    return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
+                }
+                //e->type->u.func.state = state ? DEF:DEC_UNDEF;
+                t1->u.func.args = t2->u.func.args;
+                FieldList* ret = creatFieldList(e->name,t1,NULL); //构造返回类型（函数名，函数类型）
+                return ret;
+            }
+            
         }else if(e->type->kind==FUNC &&e->type->u.func.state==DEC_UNDEF){
             Type* t1=e->type;              //符号表里的函数类型
             Type* t2 = malloc(sizeof(Type));  //分析当前节点的函数类型
@@ -291,8 +317,11 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
                 return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
             }
             e->type->u.func.state = state ? DEF:DEC_UNDEF;
+            t1->u.func.args = t2->u.func.args;
             FieldList* ret = creatFieldList(e->name,t1,NULL); //构造返回类型（函数名，函数类型）
             return ret;
+        }else{
+            assert(1);
         }
     }else{  //hash表里没有该符号名
         Type* fun = malloc(sizeof(Type));
