@@ -645,6 +645,7 @@ void Stmt(Tnode* s,Type* t){
     }else if(!strcmp(cur->name,"RETURN")){
         //
         Type* tt = Exp(cur->nextbro);
+        if(tt == NULL ) return;
         if(!equvilence(tt,t->u.func.retval)){
             Error(8,cur->line);   //return语句的返回类型与函数定义的返回类型不匹配。
         }
@@ -663,7 +664,7 @@ void Stmt(Tnode* s,Type* t){
             Stmt(cur,t);
         }
     }else{//WHILE
-        assert(strcmp(cur->name,"WHILE"));
+        assert(!strcmp(cur->name,"WHILE"));
         //
         Type* tt = Exp(childth_node(s,3));
         if(tt->kind!=BASIC||tt->u.basic!=1){
