@@ -8,7 +8,7 @@ Tnode *create_node(char *name,int type,int line){
 	new_node ->firstchild = NULL;
 	new_node ->nextbro = NULL;
 }
-Tnode *childth_node(Tnode *p,int n){
+Tnode *childth_node(Tnode *p,int n){    
 	assert(p!=NULL);
 	Tnode* cur = p->firstchild;
 	while(--n && cur!=NULL) cur=cur->nextbro;

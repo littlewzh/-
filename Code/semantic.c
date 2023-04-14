@@ -727,7 +727,13 @@ Type* Exp(Tnode* s){
             
         }
     }else if(!strcmp(cur->name,"MINUS")){
-
+        Type* tt = Exp(cur->nextbro);
+        if(tt==NULL) return NULL;
+        if(tt->kind!=BASIC){
+            Error(7,cur->line);
+            return NULL;
+        }
+        return tt;
     }else if(!strcmp(cur->name,"NOT")){
         cur = cur->nextbro;
         assert(strcmp(cur->name,"Exp"));
