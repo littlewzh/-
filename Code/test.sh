@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "---begin test---"
-  for file in ../Test/*.cmm ;do
+  for file in ../Test/Tests/inputs/*.cmm ;do
    echo ""
 	 echo "================= start  test ${file} ====================="
 	 ./parser ${file}

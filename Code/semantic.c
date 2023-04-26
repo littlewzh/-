@@ -613,13 +613,12 @@ FieldList* Dec(Tnode* s,Type* t,int flag){
                                     //行初始化（例如struct A { int a = 0; }）。
         //Error
         Type* tt = Exp(cur->nextbro);
-        if(tt!=NULL){
+        if(tt!=NULL && f!=NULL){
             if(!equvilence(tt,f->type)){
                 Error(5,cur->line);
             }
         }
     }
-    
     return f;
 }
 void Stmtlist(Tnode* s,Type* t){
@@ -716,6 +715,7 @@ Type* Exp(Tnode* s){
                         case FUNC:{
                             Tnode* tmp=childth_node(s,3);
                             FieldList* f=Args(tmp);
+                            
                             if(f==NULL) return NULL;
                             FieldList* ff = e->type->u.func.args;
                             int flag=0;
@@ -734,6 +734,7 @@ Type* Exp(Tnode* s){
                             
                         default: sdebug("Undefined error\n");return NULL;
                     }
+                    
                     return e->type->u.func.retval;
                 }
             }else{                        //ID LP RP 
