@@ -2,8 +2,8 @@
 import os,subprocess
 import atexit
 
-testpath = '../Test/Tests/inputs/'
-outpath = '../Test/Tests/expects/'
+testpath = '../Test/Tests1/inputs/'
+outpath = '../Test/Tests1/expects/'
 def run(file1:str):
     cmd = f"./parser {file1}"
     p = subprocess.Popen(cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE)
