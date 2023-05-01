@@ -86,7 +86,7 @@ letter  [_a-zA-Z]
 
 ";"                          {fdebug("SEMI      : %s\n",yytext);yylval.node=create_node("SEMI",SEMI,yylineno);return SEMI;} 
 ","                          {fdebug("COMMA     : %s\n",yytext);yylval.node=create_node("COMMA",COMMA,yylineno);return COMMA;}
->=|<=|>|<|==|!=              {fdebug("RELOP     : %s\n",yytext);yylval.node=create_node("RELOP",RELOP,yylineno);return RELOP;}
+>=|<=|>|<|==|!=              {fdebug("RELOP     : %s\n",yytext);yylval.node=create_node("RELOP",RELOP,yylineno);yylval.node->s_val=malloc(sizeof(yytext));strcpy(yylval.node->s_val,yytext);return RELOP;}
 "="                          {fdebug("ASSIGNOP  : %s\n",yytext);yylval.node=create_node("ASSIGNOP",ASSIGNOP,yylineno);return ASSIGNOP;} 
 "+"                          {fdebug("PLUS      : %s\n",yytext);yylval.node=create_node("PLUS",PLUS,yylineno);return PLUS;}
 "-"                          {fdebug("MINUS     : %s\n",yytext);yylval.node=create_node("MINUS",MINUS,yylineno);return MINUS;}

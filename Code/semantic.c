@@ -1,6 +1,7 @@
 #include "semantic.h"
 
 #define Error(n,line) printf("Error type %d at Line %d:\n",n,line)
+int semerror = 0;//语义分析错误指示
 //#define CHECKHASHTABLE
 #ifdef CHECKHASHTABLE
 #define PRINTTABLE printhash();
@@ -26,7 +27,7 @@
     }
 //extern struct treenode;
 Element* Hashtable[HASHSIZE+1];
-int Dep;  //用于实现作用与
+int Dep;  //用于实现作用域
 unsigned int hash_pjw(char* name){
     unsigned int val =0,i;
     for(;*name;++name){
@@ -39,7 +40,36 @@ void inithash(){
     for(int i=0;i<= HASHSIZE;i++){
         Hashtable[i]=NULL;
     }
+    //在符号表中预先添加read和write这两个预定义的函数
+    Type *tmpint =(Type*)malloc(sizeof(Type));
+    tmpint->kind=BASIC;tmpint->u.basic = 1;//int
+    //read函数
+    Type *tmpread =(Type*)malloc(sizeof(Type));
+    tmpread->kind = FUNC;
+    tmpread->u.func.num=0;
+    tmpread->u.func.retval=tmpint;
+    tmpread->u.func.args=NULL;
+    tmpread->u.func.state=DEF;
+    Element* etmpread = (Element*)malloc(sizeof(Element));
+    etmpread->name = "read";
+    etmpread->type = tmpread;
+    Insert(etmpread);
+    //Write函数
+    Type *tmpwrite =(Type*)malloc(sizeof(Type));
+    tmpwrite->kind = FUNC;
+    tmpwrite->u.func.num=1;
+    tmpwrite->u.func.retval=tmpint;
+    FieldList* fwrite=(FieldList*)malloc(sizeof(FieldList));
+    fwrite->name = "int";
+    fwrite->type = tmpint;
+    tmpwrite->u.func.args=fwrite;
+    tmpwrite->u.func.state=DEF;
+    Element* etmpwrite= (Element*)malloc(sizeof(Element));
+    etmpwrite->name = "write";
+    etmpwrite->type = tmpwrite;
+    Insert(etmpwrite);
 }
+
 void printhash(){
     printf("|--------------------------|\n");
     printf("| HASHTABLE ELEMENT        |\n"); //26
@@ -164,7 +194,7 @@ void checkfunc(FieldList* f){  //检查函数是否定义
             Element* e = Search(f->name);
             if(e!=NULL && e->type->kind==FUNC){
                 if(e->type->u.func.state!=DEF){
-                    Error(18,e->line);//函数进行了声明，但没有被定义。
+                    Error(18,e->line);semerror = 1;//函数进行了声明，但没有被定义。
                     return ;
                 }
             }
@@ -270,7 +300,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
     if(e!=NULL){    //hash表里有相同的函数名
         if(e->type->kind==FUNC && e->type->u.func.state==DEF){
             if(state){
-                Error(4,cur->line); //函数出现重复定义（即同样的函数名出现了不止一次定义
+                Error(4,cur->line);semerror = 1; //函数出现重复定义（即同样的函数名出现了不止一次定义
                 return NULL;
             }else{
                 Type* t1=e->type;              //符号表里的函数类型
@@ -288,7 +318,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
                     }
                 }
                 if(!equvilence(t1,t2)){
-                    Error(19,cur->line);//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
+                    Error(19,cur->line);semerror = 1;//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
                     CLEARSCOPE(t2->u.func.args)
                     return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
                 }
@@ -314,7 +344,7 @@ FieldList* Fundec(Tnode* s,Type* t,int state){  //state==1 定义；state==0 声
                 }
             }
             if(!equvilence(t1,t2)){
-                Error(19,cur->line);//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
+                Error(19,cur->line);semerror = 1;//函数的多次声明互相冲突（即函数名一致，但返回类型、形参数量
                 return NULL;                    //或者形参类型不一致），或者声明与定义之间互相冲突。
             }
             e->type->u.func.state = state ? DEF:DEC_UNDEF;
@@ -401,7 +431,7 @@ FieldList* Vardec(Tnode* s,Type* t,int flag){ //flag==1 结构体 ；flag==0 函
                 //assert(e->dep>Dep);
                 if(e->dep == Dep || e->type->kind==STRUCTURE){  //当前变量与之前的符号位于同一层作用域，或着之前的符号为结构体名
                     if(flag==0) Error(3,cur->line);//变量出现重复定义，或变量与前面定义过的结构体名字重复。
-                    else Error(15,cur->line);  //结构体中域名重复定义（指同一结构体中）
+                    else {Error(15,cur->line);semerror = 1;}  //结构体中域名重复定义（指同一结构体中）
                     break;
                 }else{           //此时虽然符号名重复，但由于作用域的影响，不冲突
                     assert(e->dep<Dep);   
@@ -412,7 +442,7 @@ FieldList* Vardec(Tnode* s,Type* t,int flag){ //flag==1 结构体 ；flag==0 函
                 }
             }
             case STRUCTURE:   //???????????????
-                Error(16,cur->line);//结构体的名字与前面定义过的结构体或变量的名字重复。
+                Error(16,cur->line);semerror = 1;//结构体的名字与前面定义过的结构体或变量的名字重复。
                 break;
             default:
                 break;
@@ -464,7 +494,7 @@ Type* Structspecifier(Tnode* s){
         char *id = Tag(cur);
         Element* e = Search(id);
         if(e==NULL){
-            Error(17,s->line);   //直接使用未定义过的结构体来定义变量。
+            Error(17,s->line);semerror = 1;   //直接使用未定义过的结构体来定义变量。
             return NULL;
         }else{
             Type* ret = malloc(sizeof(Type));  //构造返回类型
@@ -479,7 +509,7 @@ Type* Structspecifier(Tnode* s){
             char *id = Opttag(cur);
             Element* e = Search(id);
             if(e!=NULL){
-                Error(16,cur->line);  //结构体的名字与前面定义过的结构体或变量的名字重复
+                Error(16,cur->line);semerror = 1;  //结构体的名字与前面定义过的结构体或变量的名字重复
                 return NULL;
             }else{
                 Type* t = malloc(sizeof(Type));
@@ -613,9 +643,9 @@ FieldList* Dec(Tnode* s,Type* t,int flag){
                                     //行初始化（例如struct A { int a = 0; }）。
         //Error
         Type* tt = Exp(cur->nextbro);
-        if(tt!=NULL){
+        if(tt!=NULL && f!=NULL){
             if(!equvilence(tt,f->type)){
-                Error(5,cur->line);
+                Error(5,cur->line);semerror = 1;
             }
         }
     }
@@ -647,13 +677,13 @@ void Stmt(Tnode* s,Type* t){
         Type* tt = Exp(cur->nextbro);
         if(tt == NULL ) return;
         if(!equvilence(tt,t->u.func.retval)){
-            Error(8,cur->line);   //return语句的返回类型与函数定义的返回类型不匹配。
+            Error(8,cur->line);semerror = 1;   //return语句的返回类型与函数定义的返回类型不匹配。
         }
     }else if(!strcmp(cur->name,"IF")){
         //
         Type* tt = Exp(childth_node(s,3));
         if(tt!=NULL&&(tt->kind!=BASIC||tt->u.basic!=1)){
-            Error(7,cur->line);
+            Error(7,cur->line);semerror = 1;
         }
         cur = childth_node(s,5);
         Stmt(cur,t);
@@ -668,7 +698,7 @@ void Stmt(Tnode* s,Type* t){
         //
         Type* tt = Exp(childth_node(s,3));
         if(tt->kind!=BASIC||tt->u.basic!=1){
-            Error(7,cur->line);
+            Error(7,cur->line);semerror = 1;
         }
         Stmt(childth_node(s,5),t);
     }
@@ -695,7 +725,7 @@ Type* Exp(Tnode* s){
             char *id = cur->s_val;
             Element* e = Search(id);
             if(e ==NULL ){
-                Error(1,cur->line);   //变量在使用时未经定义。
+                Error(1,cur->line);semerror = 1;   //变量在使用时未经定义。
                 return NULL;
             }else{
                 return e->type;
@@ -705,12 +735,12 @@ Type* Exp(Tnode* s){
                 char *id = cur->s_val;
                 Element* e = Search(id);
                 if(e==NULL){
-                    Error(2,cur->line);//函数在调用时未经定义或声明。
+                    Error(2,cur->line);semerror = 1;//函数在调用时未经定义或声明。
                     return NULL;
                 }else{
                     switch(e->type->kind){
                         case BASIC:case STRUCTVAR:case ARRAY:
-                            Error(11,cur->line);//对普通变量使用“(…)”或“()”（函数调用）操作符。
+                            Error(11,cur->line);semerror = 1;//对普通变量使用“(…)”或“()”（函数调用）操作符。
                             return NULL;
                             break;
                         case FUNC:{
@@ -726,13 +756,13 @@ Type* Exp(Tnode* s){
                             }
                             if(f!=NULL||ff!=NULL) flag=1;
                             if(flag){
-                                Error(9,cur->line); //函数调用时实参与形参的数目或类型不匹配。
+                                Error(9,cur->line);semerror = 1; //函数调用时实参与形参的数目或类型不匹配。
                                 return NULL;
                             }
                             break;
                         }
                             
-                        default: sdebug("Undefined error\n");return NULL;
+                        default: sdebug("Undefined error\n");semerror = 1;return NULL;
                     }
                     return e->type->u.func.retval;
                 }
@@ -740,21 +770,21 @@ Type* Exp(Tnode* s){
                 char *id = cur->s_val;
                 Element* e = Search(id);
                 if(e==NULL){
-                    Error(2,cur->line);//函数在调用时未经声明和定义。
+                    Error(2,cur->line);semerror = 1;//函数在调用时未经声明和定义。
                     return NULL;
                 }else{
                     switch(e->type->kind){
                         case BASIC:case STRUCTVAR:case ARRAY:
-                            Error(11,cur->line);//对普通变量使用“(…)”或“()”（函数调用）操作符。
+                            Error(11,cur->line);semerror = 1;//对普通变量使用“(…)”或“()”（函数调用）操作符。
                             return NULL;
                             break;
                         case FUNC:
                             if(e->type->u.func.num!=0){
-                                Error(8,cur->line); //函数调用时实参与形参的数目或类型不匹配。
+                                Error(8,cur->line);semerror = 1; //函数调用时实参与形参的数目或类型不匹配。
                                 return NULL;
                             }
                             break;
-                        default: sdebug("Undefined error\n");return NULL;
+                        default: sdebug("Undefined error\n");semerror = 1;return NULL;
                     }
                     return e->type->u.func.retval;
                 }
@@ -765,7 +795,7 @@ Type* Exp(Tnode* s){
         Type* tt = Exp(cur->nextbro);
         if(tt==NULL) return NULL;
         if(tt->kind!=BASIC){
-            Error(7,cur->line);
+            Error(7,cur->line);semerror = 1;
             return NULL;
         }
         return tt;
@@ -775,7 +805,7 @@ Type* Exp(Tnode* s){
         Type* t = Exp(cur);
         if(t==NULL) return NULL;
         if(t->kind!=BASIC || t->u.basic!=1){
-            Error(7,cur->line);
+            Error(7,cur->line);semerror = 1;
             return NULL;
         }
         return t;
@@ -785,13 +815,13 @@ Type* Exp(Tnode* s){
             Type* tt = Exp(op->nextbro);
             if(tt == NULL) return NULL;
             if(tt->kind!=BASIC || tt->u.basic!=1){
-                Error(12,cur->line);  //数组访问操作符“[…]”中出现非整数（例如a[1.5]）。
+                Error(12,cur->line);semerror = 1; //数组访问操作符“[…]”中出现非整数（例如a[1.5]）。
                 return NULL;
             }
             Type* t = Exp(cur);
             if(t == NULL) return NULL;
             if(t->kind!=ARRAY){
-                Error(10,cur->line);  //对非数组型变量使用“[…]”（数组访问）操作符。
+                Error(10,cur->line);semerror = 1;  //对非数组型变量使用“[…]”（数组访问）操作符。
                 return NULL;
             }
             return t->u.array.elem;
@@ -801,7 +831,7 @@ Type* Exp(Tnode* s){
             if(t==NULL){return NULL;}
             if(t->kind!=STRUCTVAR){
                 //CHECK;
-                Error(13,cur->line);  //对非结构体型变量使用“.”操作符。
+                Error(13,cur->line);semerror = 1;  //对非结构体型变量使用“.”操作符。
                 return NULL;
             }else{
                 FieldList* struc = t->u.structure;
@@ -811,7 +841,7 @@ Type* Exp(Tnode* s){
                     struc = struc->next;
                 }
                 if(flag){
-                    Error(14,cur->line);//访问结构体中未定义过的域。
+                    Error(14,cur->line);semerror = 1;//访问结构体中未定义过的域。
                     return NULL;
                 }
                 return struc->type;
@@ -821,7 +851,7 @@ Type* Exp(Tnode* s){
             Type* t2 = Exp(op->nextbro);
             if(t1==NULL || t2==NULL){return NULL;}
             if(t1->kind!=BASIC || t1->u.basic!=1 || t2->kind!=BASIC||t2->u.basic!=1){
-                Error(7,cur->line);
+                Error(7,cur->line);semerror = 1;
                 return NULL;
             }
             return t1;
@@ -831,7 +861,7 @@ Type* Exp(Tnode* s){
             Type* t2 = Exp(op->nextbro);
             if(t1==NULL || t2==NULL){return NULL;}
             if(t1->kind!=BASIC || t2->kind!=BASIC){
-                Error(7,cur->line);
+                Error(7,cur->line);semerror = 1;
                 return NULL;
             }
             Type* ret = malloc(sizeof(Type));
@@ -846,11 +876,11 @@ Type* Exp(Tnode* s){
             if((equvilence(t1,t2))&&(t1->kind==BASIC)){
                 return t1;
             }
-            Error(7,cur->line);
+            Error(7,cur->line);semerror = 1;
             return NULL;
         }else if(!strcmp(op->name,"ASSIGNOP")){  //赋值运算 ，比较复杂
             if((judge(cur,1,"ID")==0)&&(judge(cur,4,"Exp","LB","Exp","RB")==0)&&(judge(cur,3,"Exp","DOT","ID")==0)){
-                Error(6,cur->line); //赋值号左边出现一个只有右值的表达式。
+                Error(6,cur->line);semerror = 1; //赋值号左边出现一个只有右值的表达式。
                 return NULL;
             }
             Type* t1 = Exp(cur);
@@ -858,17 +888,19 @@ Type* Exp(Tnode* s){
             if(t1==NULL || t2==NULL){return NULL;}
             if(!equvilence(t1,t2)){
                 //此处的类型匹配还需要考虑数组和结构体
-                Error(5,cur->line);  //赋值号两边的表达式类型不匹配。
+                Error(5,cur->line); semerror = 1; //赋值号两边的表达式类型不匹配。
                 return NULL;
             }
             return t1;
             //error 6
         }else{
+            semerror = 1;
             printf("Undefined error:%d\n",cur->line);
             return NULL;
         }
 
     }
+    semerror = 1;
     printf("Undefined error:%d\n",cur->line);
     return NULL;
 }

@@ -1,3 +1,5 @@
+#ifndef SEMANTIC_H
+#define SEMANTIC_H
 #include "N_tree.h"
 #define HASHSIZE 16384
 typedef struct Type_ Type;
@@ -12,7 +14,7 @@ struct Type_{
         FUNC
     } kind;
     union{
-        int basic;  //基本数据类型 int float
+        int basic;  //基本数据类型 int float //1是int
         struct{    //数组类型包括元素类型和大小
             Type* elem;
             int size;
@@ -41,6 +43,7 @@ struct Element_{
     Element* next;
     int dep;          //符号的深度
     int line;         //符号所在行
+    int varflag;      //用来在中间代码中区分结构体/数组符号是否为形参，1为形参，0为非
 };
 
 
@@ -58,7 +61,7 @@ FieldList* creatFieldList(char* s,Type* t,FieldList* ne);
 int equvilence(Type* t1,Type* t2);
 void checkfunc(FieldList* f);
 //SDT
-void semantic(Tnode* );
+void semantic(Tnode* s);
 void Program(Tnode* s);
 FieldList* Extdeflist(Tnode *s);
 FieldList* Extdef(Tnode* s);
@@ -80,3 +83,4 @@ void Stmtlist(Tnode* s,Type* t);
 void Stmt(Tnode* s,Type* t);
 Type* Exp(Tnode* s);
 FieldList* Args(Tnode* s);
+#endif

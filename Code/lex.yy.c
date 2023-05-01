@@ -927,7 +927,7 @@ YY_RULE_SETUP
 case 11:
 YY_RULE_SETUP
 #line 89 "./lexical.l"
-{fdebug("RELOP     : %s\n",yytext);yylval.node=create_node("RELOP",RELOP,yylineno);return RELOP;}
+{fdebug("RELOP     : %s\n",yytext);yylval.node=create_node("RELOP",RELOP,yylineno);yylval.node->s_val=malloc(sizeof(yytext));strcpy(yylval.node->s_val,yytext);return RELOP;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
