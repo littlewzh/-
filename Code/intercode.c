@@ -1,7 +1,7 @@
 #include "intercode.h"
 #define TODO assert(0);
-#define INTERCODE
-#ifdef INTERCODE
+//#define INTERCODEDEBUG
+#ifdef INTERCODEDEBUG
 #define idebug(...) printf(__VA_ARGS__)
 #else
 #define idebug(...) assert(1)
@@ -10,6 +10,7 @@ InterCodes intercodeshead;// 中间代码链表头
 InterCodes intercodestail;// 链表尾部
 int tmpcnt = 0;//临时变量计数器
 int labelcnt = 0;
+int tstructkind = 0;//传递一个struct返回的dot的类型值
 //NewTmp依次生成新的临时变量名
 Operand NewTmp(){
     tmpcnt++;
@@ -427,8 +428,8 @@ void Translate_CompSt(Tnode *s){
     Tnode* cur = childth_node(s,2);//DefList
     if(!strcmp(cur->name,"DefList")) {
         FieldList* h=(FieldList*)malloc(sizeof(FieldList));
-        h=Deflist(cur,NULL,0);
-        Translate_DefList(cur);//加入局部定义的所有变量类型等后面使用
+        h=Deflist(cur,NULL,0);//加入局部定义的所有变量类型等后面使用
+        Translate_DefList(cur);
         if(cur->nextbro !=NULL){
             cur = cur->nextbro; 
             if(!strcmp(cur->name,"StmtList")) {
@@ -640,7 +641,6 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
         idebug("In Exp:INT\n");
         op1->kind = CONSTANT_OP;
         op1->u.value = cur->i_val;//得到INT节点的数值
-        //printf("%s = %d\n",op0->u.name,op1->u.value);
         if(place!=NULL)NewInterCode(ASSIGN_IR,place,op1,NULL);
     }
     else if(!strcmp(cur->name,"FLOAT")) {//1) 假设1：不会出现浮点型
@@ -671,7 +671,14 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                     else{
                         Operand op = NewTmp();//t1
                         Translate_Exp(cur,op);
-                        NewInterCode(WRITE_IR,op,NULL,NULL);//WRITE t1
+                        if(op->kind!=TMPVAR_OP){
+                            Operand tt = NewTmp();
+                            NewInterCode(ASSIGN_IR,tt,op,NULL);
+                            NewInterCode(WRITE_IR,tt,NULL,NULL);
+                        }
+                        else{
+                            NewInterCode(WRITE_IR,op,NULL,NULL);//WRITE t1
+                        }
                     }
                 }
                 else{
@@ -725,9 +732,11 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
         assert(!strcmp(cur->name,"Exp"));
         //Operand op = NewTmp();
         if(!strcmp(cur->name,"Exp")) {
-            Operand op = NewTmp();
-            Translate_Exp(cur,op);//t1 = (Exp)
-            if(place!=NULL)NewInterCode(ASSIGN_IR,place,op,NULL);
+            if(place!=NULL)Translate_Exp(cur,place);//place = (Exp) = Exp
+            else{//Stmt -> (EXP);
+                Operand op = NewTmp();
+                Translate_Exp(cur,op);
+            }
         }
     }
     else if(!strcmp(cur->name,"NOT")) {
@@ -744,9 +753,15 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 op1->kind = VARIABLE_OP;op1->u.name = cur->firstchild->s_val;
                 op2->kind =CONSTANT_OP;op2->u.value = cur->nextbro->nextbro->firstchild->i_val;
                 NewInterCode(ASSIGN_IR,op1,op2,NULL);
-                return;
             }
-            if(!strcmp(cur->firstchild->name,"ID")){//Exp1直接为ID,左值不可能函数调用
+            else if(!strcmp(cur->firstchild->name,"ID")&&!strcmp(cur->nextbro->nextbro->firstchild->name,"ID")&&cur->nextbro->nextbro->firstchild->nextbro==NULL&&cur->nextbro->nextbro->nextbro==NULL){
+                //ID = ID
+                op1->kind = VARIABLE_OP;op1->u.name = cur->firstchild->s_val;
+                op2->kind = VARIABLE_OP;op2->u.name = cur->nextbro->nextbro->firstchild->s_val;
+                NewInterCode(ASSIGN_IR,op1,op2,NULL);
+            }
+            else if(!strcmp(cur->firstchild->name,"ID")){
+                //Exp1直接为ID,左值不可能函数调用
                 Operand op = NewTmp();
                 if(!strcmp(cur->nextbro->nextbro->name,"Exp")){//Exp2
                     Translate_Exp(cur->nextbro->nextbro,op);//t1 = Exp2
@@ -767,19 +782,38 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
             }
         }
         else if(!strcmp(cur->nextbro->name,"PLUS")||!strcmp(cur->nextbro->name,"MINUS")||!strcmp(cur->nextbro->name,"STAR")||!strcmp(cur->nextbro->name,"DIV")) {
-            //加减乘除一起
             idebug("In Exp:EXP-PLUS/MINUS/STAR/DIV\n");
+            //加减乘除一起,用x得到指令内容
             int x = 0;
             if(!strcmp(cur->nextbro->name,"PLUS"))x=ADD_IR;
             if(!strcmp(cur->nextbro->name,"MINUS"))x=SUB_IR;
             if(!strcmp(cur->nextbro->name,"STAR"))x=MUL_IR;
             if(!strcmp(cur->nextbro->name,"DIV"))x=DIV_IR;
             assert(x);
-            op1 = NewTmp();//t1
-            op2 = NewTmp();//t2
-            Translate_Exp(cur,op1);//Exp1
-            Translate_Exp(cur->nextbro->nextbro,op2);//Exp2
-            assert(place!=NULL);
+            //加速思路：如果Exp可以直接解析到ID或者INT就不用t1 = Exp了
+            if(!strcmp(cur->firstchild->name,"ID")&&cur->firstchild->nextbro==NULL){
+                op1->kind=VARIABLE_OP;op1->u.name=cur->firstchild->s_val;
+            }
+            else if(!strcmp(cur->firstchild->name,"INT")&&cur->firstchild->nextbro==NULL){
+                op1->kind=CONSTANT_OP ;op1->u.value=cur->firstchild->i_val;
+            }
+            else{
+                op1 = NewTmp();//t1
+                Translate_Exp(cur,op1);//Exp1
+            }
+            cur = cur->nextbro->nextbro;//Exp2
+            if(!strcmp(cur->firstchild->name,"ID")&&cur->firstchild->nextbro==NULL){
+                op2->kind=VARIABLE_OP;op2->u.name=cur->firstchild->s_val;
+            }
+            else if(!strcmp(cur->firstchild->name,"INT")&&cur->firstchild->nextbro==NULL){
+                op2->kind=CONSTANT_OP ;op2->u.value=cur->firstchild->i_val;
+            }
+            else{
+                op2 = NewTmp();//t2
+                Translate_Exp(cur,op2);//Exp2
+            }
+            //place应该不为空：不会有Stmt->Exp PLUS Exp的情况？
+            if(place==NULL)place = NewTmp();
             //下面的if主要是用来处理表达式中带有地址的问题
             if((op1->kind==GETADDRTMP_OP||op1->kind==GETVALTMP_OP)&&(op2->kind==GETADDRTMP_OP||op2->kind==GETVALTMP_OP)){
                 Operand t3 = NewTmp();//t3
@@ -817,9 +851,6 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
         else if(!strcmp(cur->nextbro->name,"LB")) {//数组
         //EXP1 LB EXP2 RB,EXP1是地址，EXP2是整数    
             idebug("In Exp:EXP-ARRAY\n");
-            Operand t1 = NewTmp();
-            Operand t2 = NewTmp();
-            Operand t3 = NewTmp();
             //先找到数组名
             int arrlen = 0;//记录数组的当前维数
             while(strcmp(cur->firstchild->name,"ID")){
@@ -831,148 +862,52 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
             Element* earr = Search(arrname);
             assert(earr->type->kind==ARRAY);
             cur = s->firstchild;
+            Operand addr = (Operand)malloc(sizeof(Operand_d));//这个数组开头地址
             if(!strcmp(cur->firstchild->name,"ID")){
-                Operand addr = (Operand)malloc(sizeof(Operand_d));//这个数组开头地址
                 if(earr->varflag == 1){
                     addr->kind = VARIABLE_OP;addr->u.name = arrname;    
                 }
                 else{
                     addr->kind = GETADDR_OP;addr->u.name = arrname; 
                 }
-                NewInterCode(ASSIGN_IR,t1,addr,NULL);//t1 = 数组开头地址
+                //NewInterCode(ASSIGN_IR,t1,addr,NULL);//t1 = 数组开头地址
             }
             else {
-                Translate_Exp(cur,t1);//Exp1
-                t1->kind = TMPVAR_OP;
+                addr = NewTmp();
+                Translate_Exp(cur,addr);//addr = Exp1
+                addr->kind = TMPVAR_OP;
             }
-            Translate_Exp(cur->nextbro->nextbro,t2);//t2是后面的偏移格数
-            int arrsize = ArraySize(earr->type->u.array.elem,arrlen);
-            t3->kind=CONSTANT_OP;t3->u.value=arrsize;//t3是单位元素的大小
-            t2->kind=TMPVAR_OP;
-            Operand t4 =NewTmp();
-            NewInterCode(MUL_IR,t4,t2,t3); 
+            Operand t4 = (Operand)malloc(sizeof(Operand_d));//偏移距离
+            int arrsize = ArraySize(earr->type->u.array.elem,arrlen);//单位元素字节长度
+            cur = cur->nextbro->nextbro;//Exp2
+            if(!strcmp(cur->firstchild->name,"INT")){//偏移数就是INT
+                int offset =cur->firstchild->i_val;
+                offset *= arrsize;
+                t4->kind=CONSTANT_OP;t4->u.value=offset;
+            }
+            else{
+                Operand t2 = NewTmp();
+                Operand t3 = NewTmp();
+                Translate_Exp(cur,t2);//t2是后面的偏移格数
+                t3->kind=CONSTANT_OP;t3->u.value=arrsize;//t3是单位元素的大小
+                t2->kind=TMPVAR_OP;
+                t4 =NewTmp();
+                NewInterCode(MUL_IR,t4,t2,t3); 
+            }
             Operand fuck = (Operand)malloc(sizeof(Operand_d));
             fuck->u.name = place->u.name;
             fuck->kind = place->kind;
-            NewInterCode(ADD_IR,fuck,t1,t4);//这里的fuck是place的地址，后面place都解引用
+            NewInterCode(ADD_IR,fuck,addr,t4);//这里的fuck是place的地址，后面place都解引用
             if(place->kind = TMPVAR_OP){
                 place->kind=GETVALTMP_OP;
             }
             else {
                 place->kind=GETVAL_OP;
             }
-
-        /*
-            //先找到ID，Search，得到地址
-            int arrlen = 1;//记录数组的维数
-            while(strcmp(cur->firstchild->name,"ID")){
-                arrlen++;
-                cur = cur->firstchild;
-                assert(cur!=NULL);
-            }
-            char* arrname = cur->firstchild->s_val;
-            Element* earr = Search(arrname);
-            assert(earr->type->kind==ARRAY);
-            int arrsize = SizeofType(earr->type->u.array.elem);//单位元素的大小
-            Operand t3=NewTmp();
-            Operand addr = (Operand)malloc(sizeof(Operand_d));
-            if(earr->varflag = 1){
-                addr->kind = VARIABLE_OP;addr->u.name = arrname;    
-            }
-            else{
-                addr->kind = GETADDR_OP;addr->u.name = arrname; 
-            }
-            NewInterCode(ASSIGN_IR,t3,addr,NULL);//t3 = 数组开头地址
-            cur = s->firstchild;//回到Exp1开始看
-            if(!strcmp(cur->firstchild->name,"ID")){//一维数组
-                cur = cur->nextbro->nextbro;//Exp2
-                Operand t2;
-                if(!strcmp(cur->firstchild->name,"INT")){
-                    // ID LB EXP RB 的exp就是int时可以加速
-                    t2=(Operand)malloc(sizeof(Operand_d));
-                    int nnum = cur->firstchild->i_val;//元素数量
-                    int ppos = nnum*arrsize;//t2 = size*num
-                    t2->kind=CONSTANT_OP;t2->u.value = ppos;
-                }
-                else {
-                    //exp为表达式求值存到t1
-                    Operand t1=NewTmp();
-                    Operand t4=NewTmp();
-                    t2 = NewTmp();
-                    Translate_Exp(cur,t1);//t1=exp2
-                    Operand op1 = (Operand)malloc(sizeof(Operand_d));
-                    op1->kind = CONSTANT_OP;op1->u.value=arrsize;
-                    NewInterCode(ASSIGN_IR,t4,op1,NULL);//t4 = size
-                    NewInterCode(MUL_IR,t2,t1,t4);//t2 = size*num
-                }
-                assert(place!=NULL);
-                Operand fuck = (Operand)malloc(sizeof(Operand_d));
-                fuck->u.name = place->u.name;
-                fuck->kind = place->kind;
-                NewInterCode(ADD_IR,fuck,t3,t2);//这里的fuck是place的地址，后面place都解引用
-                if(place->kind = TMPVAR_OP){
-                    place->kind=GETVALTMP_OP;
-                }
-                else {
-                    place->kind=GETVAL_OP;
-                }
-            }
-            else{//多维数组:要看前面经历了多少个元素
-                int pos = 0;int dep = 0;int ArrErrorFlag = 0;//errorlag = 1说明中间有[Exp]不是INT
-                int num[999];int arrnum[999];//arrnum是宽度，num是实际位置
-                while(strcmp(cur->firstchild->name,"ID")){
-                    dep++;//多一维度，最后一维是1
-                    Tnode* exp2 = cur->nextbro->nextbro;
-                    assert(!strcmp(exp2->name,"Exp"));
-                    if(strcmp(exp2->firstchild->name,"INT")){//不是INT
-                        ArrErrorFlag = 1;
-                        break;
-                    }
-                    int tmpnum = exp2->firstchild->i_val;//这一维上的数值
-                    num[arrlen - dep] = tmpnum;//从0到arrlen-1
-                    cur = cur->firstchild;
-                    assert(cur!=NULL);
-                }
-                if(!ArrErrorFlag){
-                    num[0]=cur->nextbro->nextbro->firstchild->i_val;
-                    assert(num[0]);
-                    Type* arrt = earr->type;
-                    for(int i=0;i<arrlen;i++){
-                        assert(arrt->kind == ARRAY);
-                        arrnum[i] = arrt->u.array.size;
-                        arrt = arrt->u.array.elem;
-                    }
-                    for(int i=0;i<arrlen;i++){
-                        int tmppos = 0;
-                        tmppos = num[i];
-                        for(int j=i+1;j<arrlen;j++){
-                            tmppos *= arrnum[j];
-                        }
-                        pos+=tmppos;
-                    }
-                    Operand t2=(Operand)malloc(sizeof(Operand_d));
-                    t2->kind=CONSTANT_OP;t2->u.value=pos*4;//pos*arrsize;
-                    assert(place!=NULL);
-                    Operand fuck = (Operand)malloc(sizeof(Operand_d));
-                    fuck->u.name = place->u.name;
-                    fuck->kind = place->kind;
-                    NewInterCode(ADD_IR,fuck,t3,t2);//这里的fuck是place的地址，后面place都解引用
-                    if(place->kind = TMPVAR_OP){
-                        place->kind=GETVALTMP_OP;
-                    }
-                    else {
-                        place->kind=GETVAL_OP;
-                    }
-                    return;
-                }
-                //[Exp]中间不是INT的另外做
-                TODO
-                
-            }
-        */
         }
         else if(!strcmp(cur->nextbro->name,"DOT")) {//结构体的属性
             idebug("In Exp:EXP-DOT\n");
+            int addflag = 0;//为1表示返回的是地址
             if(!strcmp(cur->firstchild->name,"ID")&&(cur->firstchild->nextbro == NULL)){
                 //直接提取struct名字查表得到结构信息
                 char *structname = cur->firstchild->s_val;
@@ -998,7 +933,10 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 while(strcmp(fpos->name,dotname)){//遍历属性链表找匹配
                     size+= SizeofType(fpos->type);
                     fpos = fpos->next;
-                   assert(fpos!=NULL);//找完了还没有这个属性
+                    assert(fpos!=NULL);//找完了还没有这个属性
+                }
+                if(fpos->type->kind!=BASIC){//这个属性不是BASIC，返回地址
+                    addflag = 1;
                 }
                 Operand sizeop = (Operand)malloc(sizeof(Operand_d));
                 sizeop->kind = CONSTANT_OP;sizeop->u.value=size;
@@ -1013,6 +951,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 fuck->u.name = place->u.name;
                 fuck->kind = place->kind;
                 NewInterCode(ASSIGN_IR,fuck,t5,NULL);
+                if(addflag!=0)return;//返回的就是地址
                 if(place->kind = TMPVAR_OP){
                     place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
                 }
@@ -1021,8 +960,56 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 }
             }
             else{
-                TODO
                 //Exp1不是直接是结构体的ID
+                while(strcmp(cur->firstchild->name,"ID")){//直到找到结构体ID
+                    cur = cur->firstchild;
+                    assert(cur!=NULL);
+                }
+                //直接提取struct名字查表得到结构信息
+                char *structname = cur->firstchild->s_val;
+                Operand op = (Operand)malloc(sizeof(Operand_d));
+                Element* estruct = Search(structname);
+                assert(estruct!=NULL);//不可能找不到这个元素
+                if(estruct->varflag == 1){//说明是形参，直接就是地址
+                    op->kind = VARIABLE_OP;op->u.name = structname;
+                }
+                else{
+                    op->kind = GETADDR_OP;op->u.name = structname;
+                }
+                Operand addr = NewTmp();//得到结构体开头地址
+                NewInterCode(ASSIGN_IR,addr,op,NULL);
+                //下面查看结构体信息找到对应属性
+                cur = s->firstchild;//Exp1 
+                cur =cur->nextbro->nextbro;//ID
+                assert(cur!=NULL);
+                assert(!strcmp(cur->name,"ID"));
+                char *dotname = cur->s_val;
+                idebug("structname: %s ,dotname: %s\n",structname,dotname);
+                int size = 0;
+                tstructkind = -1;
+                size = fuckstructsize(estruct->type,dotname);
+                assert(tstructkind != -1);//肯定能找到这个属性
+                if(tstructkind!=BASIC)addflag = 1;
+                Operand sizeop = (Operand)malloc(sizeof(Operand_d));
+                sizeop->kind = CONSTANT_OP;sizeop->u.value=size;
+                Operand t5 = NewTmp();
+                NewInterCode(ADD_IR,t5,addr,sizeop);//得到了属性对应地址
+                if(place==NULL){
+                    Operand tmp = NewTmp();
+                    place->kind = tmp->kind;
+                    place->u.name = tmp->u.name;
+                }
+                Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
+                fuck->u.name = place->u.name;
+                fuck->kind = place->kind;
+                NewInterCode(ASSIGN_IR,fuck,t5,NULL);
+                if(addflag!=0)return;//返回的就是地址
+                if(place->kind = TMPVAR_OP){
+                    place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
+                }
+                else{
+                    place->kind = GETVAL_OP;
+                }
             }
         }
         else{
@@ -1032,7 +1019,30 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
     }
     else {
         printf("Error in translate:No Exp type\n");
+        assert(0);
     }
+}
+int fuckstructsize(Type* t,char* dotname){
+    if(t->kind!=STRUCTURE&&t->kind!=STRUCTVAR){
+        return SizeofType(t);
+    }
+    FieldList* ff = t->u.structure;
+    int size = 0;
+    while(strcmp(ff->name,dotname)){//遍历属性链表找匹配,匹配到了就返回之前加和的size
+        int tmpsize = SizeofType(ff->type);
+        int ttmpsize = fuckstructsize(ff->type,dotname);
+        if(tmpsize == ttmpsize){//说明遍历没找到对应的属性
+            size+=tmpsize;
+        }
+        else{//找到对应了直接返回
+            size+=ttmpsize;
+            return size;
+        }
+        ff = ff->next;
+        if(ff==NULL)break;
+    }
+    if(ff!=NULL)tstructkind = ff->type->kind;
+    return size;
 }
 int ArraySize(Type* t,int n){//名字是t，维度在n（需要跳过几次），例如对3维数组第一维的size就是2*3
     idebug("In Arraysize\n");
@@ -1156,16 +1166,37 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
     }
     else if(!strcmp(cur->name,"Exp")){
         if(!strcmp(cur->nextbro->name,"RELOP")){
-            Operand t1 = NewTmp();
-            Operand t2 = NewTmp();
-            Translate_Exp(cur,t1);//code1
-            cur = cur ->nextbro;//RELOP
+            //EXP1
+            Operand t1 = (Operand)malloc(sizeof(Operand_d));
+            if(!strcmp(cur->firstchild->name,"INT")){
+                t1->kind=CONSTANT_OP;t1->u.value=cur->firstchild->i_val;
+            }
+            else if(!strcmp(cur->firstchild->name,"ID")&&cur->firstchild->nextbro==NULL){
+                t1->kind=VARIABLE_OP;t1->u.name=cur->firstchild->s_val;
+            }
+            else{
+                t1 = NewTmp();
+                Translate_Exp(cur,t1);//code1
+            }
+            //RELOP
+            cur = cur ->nextbro;
             char* relop = cur->s_val;// RELOP的内容
             assert(relop!=NULL);
             Operand op1 = (Operand)malloc(sizeof(Operand_d)); // op1是比较符号
             op1->kind = TMPVAR_OP;op1->u.name = relop;
-            cur = cur ->nextbro;//EXP2
-            Translate_Exp(cur,t2);//code2
+            //EXP2
+            Operand t2 = (Operand)malloc(sizeof(Operand_d));
+            cur = cur ->nextbro;
+            if(!strcmp(cur->firstchild->name,"INT")){
+                t2->kind=CONSTANT_OP;t2->u.value=cur->firstchild->i_val;
+            }
+            else if(!strcmp(cur->firstchild->name,"ID")&&cur->firstchild->nextbro==NULL){
+                t2->kind=VARIABLE_OP;t2->u.name=cur->firstchild->s_val;
+            }
+            else{
+                t2 = NewTmp();
+                Translate_Exp(cur,t2);//code2
+            }
             NewInterCode(IFGOTO_IR,t1,op1,t2);
             NewInterCode(GOTO_IR,L1,NULL,NULL);
             NewInterCode(GOTO_IR,L2,NULL,NULL);//label 2
