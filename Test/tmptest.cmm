@@ -6,10 +6,11 @@ struct s2{
     int x2;
     struct s1 s11;
 };
+struct s3
 int foo(struct s1 sx){
     struct s2 s22;
     int bar = 1;
-    //sx.y[2][3] = bar;
+    sx.y[2][3] = bar;
     s22.s11.y[2][3] = 1;
 }
 
