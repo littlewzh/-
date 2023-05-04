@@ -1,6 +1,6 @@
 #include "intercode.h"
 #define TODO assert(0);
-//#define INTERCODEDEBUG
+#define INTERCODEDEBUG
 #ifdef INTERCODEDEBUG
 #define idebug(...) printf(__VA_ARGS__)
 #else
@@ -10,6 +10,7 @@ InterCodes intercodeshead;// 中间代码链表头
 InterCodes intercodestail;// 链表尾部
 int tmpcnt = 0;//临时变量计数器
 int labelcnt = 0;
+Type* tstructtype;
 int tstructkind = 0;//传递一个struct返回的dot的类型值
 //NewTmp依次生成新的临时变量名
 Operand NewTmp(){
@@ -566,7 +567,7 @@ void Translate_Stmt(Tnode *s){
     assert(!strcmp(s->name,"Stmt"));
     Tnode* cur = s->firstchild;
     Operand op = (Operand)malloc(sizeof(Operand_d));
-    if(!strcmp(cur->name,"Exp")) {
+    if(!strcmp(cur->name,"Exp")) {//Exp SEMI;
         Translate_Exp(cur,NULL);
     }
     else if(!strcmp(cur->name,"CompSt")) {
@@ -753,12 +754,14 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 op1->kind = VARIABLE_OP;op1->u.name = cur->firstchild->s_val;
                 op2->kind =CONSTANT_OP;op2->u.value = cur->nextbro->nextbro->firstchild->i_val;
                 NewInterCode(ASSIGN_IR,op1,op2,NULL);
+                if(place!=NULL)NewInterCode(ASSIGN_IR,place,op1,NULL);//place = exp1
             }
-            else if(!strcmp(cur->firstchild->name,"ID")&&!strcmp(cur->nextbro->nextbro->firstchild->name,"ID")&&cur->nextbro->nextbro->firstchild->nextbro==NULL&&cur->nextbro->nextbro->nextbro==NULL){
+            else if(!strcmp(cur->firstchild->name,"ID")&&!strcmp(cur->nextbro->nextbro->firstchild->name,"ID")&&cur->nextbro->nextbro->firstchild->nextbro==NULL){
                 //ID = ID
                 op1->kind = VARIABLE_OP;op1->u.name = cur->firstchild->s_val;
                 op2->kind = VARIABLE_OP;op2->u.name = cur->nextbro->nextbro->firstchild->s_val;
                 NewInterCode(ASSIGN_IR,op1,op2,NULL);
+                if(place!=NULL)NewInterCode(ASSIGN_IR,place,op1,NULL);//place = exp1
             }
             else if(!strcmp(cur->firstchild->name,"ID")){
                 //Exp1直接为ID,左值不可能函数调用
@@ -778,7 +781,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 assert(!strcmp(cur->nextbro->nextbro->name,"Exp"));//Exp2
                 Translate_Exp(cur->nextbro->nextbro,t2);//t2 = Exp2
                 NewInterCode(ASSIGN_IR,t1,t2,NULL);//
-                if(place!=NULL)NewInterCode(ASSIGN_IR,place,t1,NULL);//place
+                if(place!=NULL)NewInterCode(ASSIGN_IR,place,t1,NULL);//place = exp1
             }
         }
         else if(!strcmp(cur->nextbro->name,"PLUS")||!strcmp(cur->nextbro->name,"MINUS")||!strcmp(cur->nextbro->name,"STAR")||!strcmp(cur->nextbro->name,"DIV")) {
@@ -790,7 +793,33 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
             if(!strcmp(cur->nextbro->name,"STAR"))x=MUL_IR;
             if(!strcmp(cur->nextbro->name,"DIV"))x=DIV_IR;
             assert(x);
-            //加速思路：如果Exp可以直接解析到ID或者INT就不用t1 = Exp了
+            //加速思路0：立即数直接运算
+            if(!strcmp(cur->firstchild->name,"INT")&&cur->firstchild->nextbro==NULL && !strcmp(cur->nextbro->nextbro->firstchild->name,"INT")&&cur->nextbro->nextbro->firstchild->nextbro==NULL){
+                //两个立即数直接操作
+                op1->kind=CONSTANT_OP ;op1->u.value=cur->firstchild->i_val;
+                op2->kind=CONSTANT_OP ;op2->u.value=cur->nextbro->nextbro->firstchild->i_val;
+                if(x == ADD_IR){
+                    op0->kind = CONSTANT_OP;op0->u.value = op1->u.value + op2->u.value;
+                    if(place!=NULL)NewInterCode(ASSIGN_IR,place,op0,NULL);
+                }
+                else if(x == SUB_IR){
+                    op0->kind = CONSTANT_OP;op0->u.value = op1->u.value - op2->u.value;
+                    if(place!=NULL)NewInterCode(ASSIGN_IR,place,op0,NULL);
+                }
+                else if(x == MUL_IR){
+                    op0->kind = CONSTANT_OP;op0->u.value = op1->u.value * op2->u.value;
+                    if(place!=NULL)NewInterCode(ASSIGN_IR,place,op0,NULL);
+                }
+                else if(x == DIV_IR){
+                    op0->kind = CONSTANT_OP;op0->u.value = op1->u.value / op2->u.value;
+                    if(place!=NULL)NewInterCode(ASSIGN_IR,place,op0,NULL);
+                }
+                else{
+                    assert(0);
+                }
+                return;
+            }
+            //加速思路1：如果Exp可以直接解析到ID或者INT就不用t1 = Exp了
             if(!strcmp(cur->firstchild->name,"ID")&&cur->firstchild->nextbro==NULL){
                 op1->kind=VARIABLE_OP;op1->u.name=cur->firstchild->s_val;
             }
@@ -812,8 +841,20 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 op2 = NewTmp();//t2
                 Translate_Exp(cur,op2);//Exp2
             }
-            //place应该不为空：不会有Stmt->Exp PLUS Exp的情况？
+            //防一手place为空：但应该不会有Stmt->Exp PLUS Exp的情况？
             if(place==NULL)place = NewTmp();
+            //加速思路2：+0，*1等不用翻译直接变成赋值
+            if(((x==ADD_IR||x==SUB_IR)&&op1->u.value==0)||((x==MUL_IR||x==DIV_IR)&&op1->u.value==1)){
+                // 0 + exp2 、 1*exp2
+                NewInterCode(ASSIGN_IR,place,op2,NULL);
+                return;
+            }
+            if(((x==ADD_IR||x==SUB_IR)&&op2->u.value==0)||((x==MUL_IR||x==DIV_IR)&&op2->u.value==1)){
+                // 0 + exp1 、 1*exp1
+                NewInterCode(ASSIGN_IR,place,op1,NULL);
+                return;
+            }
+            //得到op1和op2后正常处理流程：
             //下面的if主要是用来处理表达式中带有地址的问题
             if((op1->kind==GETADDRTMP_OP||op1->kind==GETVALTMP_OP)&&(op2->kind==GETADDRTMP_OP||op2->kind==GETVALTMP_OP)){
                 Operand t3 = NewTmp();//t3
@@ -853,33 +894,63 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
             idebug("In Exp:EXP-ARRAY\n");
             //先找到数组名
             int arrlen = 0;//记录数组的当前维数
+            int flag = 0;//用于指示结构体数组
             while(strcmp(cur->firstchild->name,"ID")){
-                arrlen++;
                 cur = cur->firstchild;
-                assert(cur!=NULL);
-            }
-            char* arrname = cur->firstchild->s_val;
-            Element* earr = Search(arrname);
-            assert(earr->type->kind==ARRAY);
-            cur = s->firstchild;
-            Operand addr = (Operand)malloc(sizeof(Operand_d));//这个数组开头地址
-            if(!strcmp(cur->firstchild->name,"ID")){
-                if(earr->varflag == 1){
-                    addr->kind = VARIABLE_OP;addr->u.name = arrname;    
+                if(strcmp(cur->nextbro->name,"LB")){//是结构体中的数组
+                    flag = 1;
                 }
                 else{
-                    addr->kind = GETADDR_OP;addr->u.name = arrname; 
+                    arrlen++;//只有是数组时才计数维度
                 }
-                //NewInterCode(ASSIGN_IR,t1,addr,NULL);//t1 = 数组开头地址
+                assert(cur!=NULL);
             }
-            else {
+            //下面求开头地址
+            Operand addr = (Operand)malloc(sizeof(Operand_d));//这个数组开头地址
+            int arrsize = 0;//单位长度
+            char* arrname = cur->firstchild->s_val;
+            Element* earr = Search(arrname);
+            if(flag){//是结构体里面的数组
+                cur = s->firstchild;//Exp1
                 addr = NewTmp();
-                Translate_Exp(cur,addr);//addr = Exp1
+                Translate_Exp(cur,addr);//addr得到数组开头地址
                 addr->kind = TMPVAR_OP;
+                //下面要求arrsize,就要得到结构体dotname的类型
+                char *dotname;
+                while(!strcmp(cur->firstchild->name,"Exp")){
+                    if(!strcmp(cur->nextbro->nextbro->name,"ID")){//找到第一个解析出的ID就是DOTNAME
+                        dotname = cur->nextbro->nextbro->s_val;
+                        break; 
+                    }
+                    cur = cur ->firstchild;
+                    if(cur == NULL){
+                        TODO
+                    }
+                }
+                fuckstructsize(earr->type,dotname);//调用后就得到dotname的type为：tstructtype
+                assert(tstructtype->kind==ARRAY);
+                arrsize = ArraySize(tstructtype->u.array.elem,arrlen);
+            }
+            else{//普通数组
+                assert(earr->type->kind==ARRAY);
+                arrsize = ArraySize(earr->type->u.array.elem,arrlen);//单位元素字节长度
+                cur = s->firstchild;
+                if(!strcmp(cur->firstchild->name,"ID")){
+                    if(earr->varflag == 1){
+                        addr->kind = VARIABLE_OP;addr->u.name = arrname;    
+                    }
+                    else{
+                        addr->kind = GETADDR_OP;addr->u.name = arrname; 
+                    }
+                }
+                else {
+                    addr = NewTmp(); 
+                    Translate_Exp(cur,addr);//addr = Exp1
+                    addr->kind = TMPVAR_OP;
+                }
             }
             Operand t4 = (Operand)malloc(sizeof(Operand_d));//偏移距离
-            int arrsize = ArraySize(earr->type->u.array.elem,arrlen);//单位元素字节长度
-            cur = cur->nextbro->nextbro;//Exp2
+            cur = s->firstchild->nextbro->nextbro;//Exp2
             if(!strcmp(cur->firstchild->name,"INT")){//偏移数就是INT
                 int offset =cur->firstchild->i_val;
                 offset *= arrsize;
@@ -1023,6 +1094,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
     }
 }
 int fuckstructsize(Type* t,char* dotname){
+    idebug("In fuckstructsize\n");
     if(t->kind!=STRUCTURE&&t->kind!=STRUCTVAR){
         return SizeofType(t);
     }
@@ -1041,12 +1113,15 @@ int fuckstructsize(Type* t,char* dotname){
         ff = ff->next;
         if(ff==NULL)break;
     }
-    if(ff!=NULL)tstructkind = ff->type->kind;
+    if(ff!=NULL){  
+        tstructkind = ff->type->kind;
+        tstructtype = ff->type;
+    }
     return size;
 }
 int ArraySize(Type* t,int n){//名字是t，维度在n（需要跳过几次），例如对3维数组第一维的size就是2*3
     idebug("In Arraysize\n");
-    idebug("weidu:%d\n",n);
+    //idebug("weidu:%d\n",n);
     int base = 0;
     Type *tmp =t;
     while(tmp->kind==ARRAY){
@@ -1063,11 +1138,11 @@ int ArraySize(Type* t,int n){//名字是t，维度在n（需要跳过几次）�
         res*=tmp->u.array.size;
         tmp=tmp->u.array.elem;
     }
-    idebug("ArraySize:%d\n",res);
+    //idebug("ArraySize:%d\n",res);
     return res;
 }
 int SizeofType(Type* t){
-    idebug("In SizeofType\n");
+    //idebug("In SizeofType\n");
     int size=0;
     switch(t->kind){
         case BASIC:
@@ -1078,18 +1153,20 @@ int SizeofType(Type* t){
             break;
         case STRUCTURE:
         case STRUCTVAR:
-            FieldList* fpos = t->u.structure;
-            while(fpos!=NULL){//遍历属性链表
-                size+= SizeofType(fpos->type);
-                fpos = fpos->next;
+            {
+                FieldList* fpos = t->u.structure;
+                while(fpos!=NULL){//遍历属性链表
+                    size+= SizeofType(fpos->type);
+                    fpos = fpos->next;
+                }
+                break;
             }
-            break;
         case FUNC:
             TODO
         default:
             assert(0);
     }
-    idebug("SizeofType:%d\n",size);
+    //idebug("SizeofType:%d\n",size);
     return size;
 }
 void Translate_Args(Tnode *s){//函数调用的参数列表

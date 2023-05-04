@@ -1,10 +1,23 @@
-int main()
-{
-	int a,b,c;
-	int d = 0;
-    int f = d;
-    a = b;
-    c = d = 1;
-    c = d = b;
-    return 0;
+struct s1{
+    int x1;
+    int y[5][6];
+};
+struct s2{
+    int x2;
+    struct s1 s11;
+};
+int foo(struct s1 sx){
+    struct s2 s22;
+    int bar = 1;
+    //sx.y[2][3] = bar;
+    s22.s11.y[2][3] = 1;
+}
+
+int main() {
+    int a[2][3];
+    int b;
+    a[1][1] = 1;
+    b = a[1][2];
+    a[0][1] = b; 
+    return b;
 }
