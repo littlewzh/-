@@ -1012,83 +1012,31 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                             op->kind = GETADDR_OP;op->u.name = structname;
                         }
                         NewInterCode(ASSIGN_IR,addr,op,NULL);
-                    Operand t5 = NewTmp();
-                    NewInterCode(ADD_IR,t5,addr,sizeop);//得到了属性对应地址
-                    if(place==NULL){
-                        Operand tmp = NewTmp();
-                        place->kind = tmp->kind;
-                        place->u.name = tmp->u.name;
-                    }
-                    Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
-                    fuck->u.name = place->u.name;
-                    fuck->kind = place->kind;
-                    NewInterCode(ASSIGN_IR,fuck,t5,NULL);
-                    if(place->kind = TMPVAR_OP){
-                        place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
-                    }
-                    else{
-                        place->kind = GETVAL_OP;
-                    }
-                    return;//直接走了
+                        Operand t5 = NewTmp();
+                        NewInterCode(ADD_IR,t5,addr,sizeop);//得到了属性对应地址
+                        if(place==NULL){
+                            Operand tmp = NewTmp();
+                            place->kind = tmp->kind;
+                            place->u.name = tmp->u.name;
+                        }
+                        Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
+                        fuck->u.name = place->u.name;
+                        fuck->kind = place->kind;
+                        NewInterCode(ASSIGN_IR,fuck,t5,NULL);
+                        if(place->kind = TMPVAR_OP){
+                            place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
+                        }
+                        else{
+                            place->kind = GETVAL_OP;
+                        }
+                        return;//直接走了
                     }
                 }
-                    Operand tt = NewTmp();
-                    Translate_Exp(s->firstchild,tt);//知道了开头地址只要知道相对上一层的偏移
-                    tt->kind = TMPVAR_OP;//地址
-                    Operand t5 = NewTmp();
-                    NewInterCode(ADD_IR,t5,tt,sizeop);//得到了属性对应地址
-                    if(place==NULL){
-                        Operand tmp = NewTmp();
-                        place->kind = tmp->kind;
-                        place->u.name = tmp->u.name;
-                    }
-                    Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
-                    fuck->u.name = place->u.name;
-                    fuck->kind = place->kind;
-                    NewInterCode(ASSIGN_IR,fuck,t5,NULL);
-                    if(place->kind = TMPVAR_OP){
-                        place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
-                    }
-                    else{
-                        place->kind = GETVAL_OP;
-                    }
-            //*/
-            /*
-            int addflag = 0;//为1表示返回的是地址
-            if(!strcmp(cur->firstchild->name,"ID")&&(cur->firstchild->nextbro == NULL)){
-                //直接提取struct名字查表得到结构信息
-                char *structname = cur->firstchild->s_val;
-                Operand op = (Operand)malloc(sizeof(Operand_d));
-                Element* estruct = Search(structname);
-                assert(estruct!=NULL);//不可能找不到这个元素
-                if(estruct->varflag == 1){//说明是形参，直接就是地址
-                    op->kind = VARIABLE_OP;op->u.name = structname;
-                }
-                else{
-                    op->kind = GETADDR_OP;op->u.name = structname;
-                }
-                Operand addr = NewTmp();//得到结构体开头地址
-                NewInterCode(ASSIGN_IR,addr,op,NULL);
-                //下面查看结构体信息找到对应属性
-                cur =cur->nextbro->nextbro;//ID
-                assert(cur!=NULL);
-                assert(!strcmp(cur->name,"ID"));
-                char *dotname = cur->s_val;
-                idebug("structname: %s ,dotname: %s\n",structname,dotname);
-                FieldList* fpos = estruct->type->u.structure;
-                int size = 0;
-                while(strcmp(fpos->name,dotname)){//遍历属性链表找匹配
-                    size+= SizeofType(fpos->type);
-                    fpos = fpos->next;
-                    assert(fpos!=NULL);//找完了还没有这个属性
-                }
-                if(fpos->type->kind!=BASIC){//这个属性不是BASIC，返回地址
-                    addflag = 1;
-                }
-                Operand sizeop = (Operand)malloc(sizeof(Operand_d));
-                sizeop->kind = CONSTANT_OP;sizeop->u.value=size;
+                Operand tt = NewTmp();
+                Translate_Exp(s->firstchild,tt);//知道了开头地址只要知道相对上一层的偏移
+                tt->kind = TMPVAR_OP;//地址
                 Operand t5 = NewTmp();
-                NewInterCode(ADD_IR,t5,addr,sizeop);//得到了属性对应地址
+                NewInterCode(ADD_IR,t5,tt,sizeop);//得到了属性对应地址
                 if(place==NULL){
                     Operand tmp = NewTmp();
                     place->kind = tmp->kind;
@@ -1098,72 +1046,12 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 fuck->u.name = place->u.name;
                 fuck->kind = place->kind;
                 NewInterCode(ASSIGN_IR,fuck,t5,NULL);
-                if(addflag!=0)return;//返回的就是地址
                 if(place->kind = TMPVAR_OP){
                     place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
                 }
                 else{
                     place->kind = GETVAL_OP;
                 }
-            }
-            else{
-                //Exp1不是直接是结构体的ID
-                int dotflag = 0;//为0表示前面确实都是a.b.c.d的形式，否则需要另外的方式
-                while(strcmp(cur->firstchild->name,"ID")){//直到找到结构体ID
-                    cur = cur->firstchild;
-                    if(strcmp(cur->nextbro->name,"DOT")){
-                        //不是DOT了,寄
-                        dotflag = 1;
-                    }
-                    assert(cur!=NULL);
-                }
-                //直接提取struct名字查表得到结构信息
-                char *structname = cur->firstchild->s_val;
-                Operand op = (Operand)malloc(sizeof(Operand_d));
-                Element* estruct = Search(structname);
-                assert(estruct!=NULL);//不可能找不到这个元素
-                if(estruct->varflag == 1){//说明是形参，直接就是地址
-                    op->kind = VARIABLE_OP;op->u.name = structname;
-                }
-                else{
-                    op->kind = GETADDR_OP;op->u.name = structname;
-                }
-                Operand addr = NewTmp();//得到结构体开头地址
-                NewInterCode(ASSIGN_IR,addr,op,NULL);
-                //下面查看结构体信息找到对应属性
-                cur = s->firstchild;//Exp1 
-                cur =cur->nextbro->nextbro;//ID
-                assert(cur!=NULL);
-                assert(!strcmp(cur->name,"ID"));
-                char *dotname = cur->s_val;
-                idebug("structname: %s ,dotname: %s\n",structname,dotname);
-                int size = 0;
-                tstructkind = -1;
-                size = fuckstructsize(estruct->type,dotname);
-                assert(tstructkind != -1);//肯定能找到这个属性
-                if(tstructkind!=BASIC)addflag = 1;
-                Operand sizeop = (Operand)malloc(sizeof(Operand_d));
-                sizeop->kind = CONSTANT_OP;sizeop->u.value=size;
-                Operand t5 = NewTmp();
-                NewInterCode(ADD_IR,t5,addr,sizeop);//得到了属性对应地址
-                if(place==NULL){
-                    Operand tmp = NewTmp();
-                    place->kind = tmp->kind;
-                    place->u.name = tmp->u.name;
-                }
-                Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
-                fuck->u.name = place->u.name;
-                fuck->kind = place->kind;
-                NewInterCode(ASSIGN_IR,fuck,t5,NULL);
-                if(addflag!=0)return;//返回的就是地址
-                if(place->kind = TMPVAR_OP){
-                    place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
-                }
-                else{
-                    place->kind = GETVAL_OP;
-                }
-            }
-            */
         }
         else{
             printf("Error in translate:wrong Exp in Exp\n");
@@ -1231,32 +1119,6 @@ Type* finddottype(Type* t,char* dotname){
     }
     return NULL;
     
-}
-int fuckstructsize(Type* t,char* dotname){
-    idebug("In fuckstructsize\n");
-    if(t->kind!=STRUCTURE&&t->kind!=STRUCTVAR){
-        return SizeofType(t);
-    }
-    FieldList* ff = t->u.structure;
-    int size = 0;
-    while(strcmp(ff->name,dotname)){//遍历属性链表找匹配,匹配到了就返回之前加和的size
-        int tmpsize = SizeofType(ff->type);
-        int ttmpsize = fuckstructsize(ff->type,dotname);
-        if(tmpsize == ttmpsize){//说明遍历没找到对应的属性
-            size+=tmpsize;
-        }
-        else{//找到对应了直接返回
-            size+=ttmpsize;
-            return size;
-        }
-        ff = ff->next;
-        if(ff==NULL)break;
-    }
-    if(ff!=NULL){  
-        tstructkind = ff->type->kind;
-        tstructtype = ff->type;
-    }
-    return size;
 }
 int ArraySize(Type* t,int n){//名字是t，维度在n（需要跳过几次），例如对3维数组第一维的size就是2*3
     idebug("In Arraysize\n");
@@ -1381,6 +1243,7 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
         return;
     }
     else if(!strcmp(cur->name,"Exp")){
+        if(cur->nextbro!=NULL){
         if(!strcmp(cur->nextbro->name,"RELOP")){
             //EXP1
             Operand t1 = (Operand)malloc(sizeof(Operand_d));
@@ -1419,6 +1282,7 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
             return;
         }else if(!strcmp(cur->nextbro->name,"AND")){
             Operand L0 = NewLabel();
+            strcpy(cur->nextbro->name,"FUCK");
             Translate_Cond(cur,L0,L2);//code1
             NewInterCode(LABEL_IR,L0,NULL,NULL);//label 0
             cur = cur->nextbro->nextbro;//EXP2
@@ -1426,12 +1290,14 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
             return;
         }else if(!strcmp(cur->nextbro->name,"OR")){
             Operand L0 = NewLabel();
+            strcpy(cur->nextbro->name,"FUCK");
             Translate_Cond(cur,L1,L0);//code1
             NewInterCode(LABEL_IR,L0,NULL,NULL);//label 0
             cur = cur->nextbro->nextbro;//EXP2
             Translate_Cond(cur,L1,L2);//code2
             return;
         }
+    }
     }
     //处理其他else情况??
         Operand t1=NewTmp();

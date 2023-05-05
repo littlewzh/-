@@ -1,24 +1,16 @@
 
-FUNCTION foo :
-PARAM sx 
-DEC s22 852 
-DEC s33 35788 
-DEC s111 1688 
-DEC a1 16 
-DEC a2 4 
-bar := #1 
-t11 := &s33 
-t12 := t11 + #4 
-t10 := t12 
-t9 := t10 + #23856 
-t8 := t9 + #4260 
-t13 := t8 + #8 
-t6 := t13 
-t14 := t6 + #4 
-t4 := t14 
-t3 := t4 + #336 
-t2 := t3 + #84 
-t1 := t2 + #16 
-t15 := #1 
-*t1 := t15 
+FUNCTION PutQueen :
+PARAM a 
+t1 := #0 
+t2 := a 
+IF t2 != #0 GOTO label1 
+GOTO label3 
+LABEL label3 :
+t3 := b 
+IF t3 != #0 GOTO label1 
+GOTO label2 
+LABEL label1 :
+t1 := #1 
+LABEL label2 :
+x := t1 
 RETURN #0 
