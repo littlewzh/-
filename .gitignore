@@ -1,0 +1,4 @@
+irsim/
+*.zip
+.*
+!.gitignore
