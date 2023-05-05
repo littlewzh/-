@@ -40,6 +40,8 @@ void Translate_Dec(Tnode *s);
 void Translate_StmtList(Tnode *s);
 void Translate_Stmt(Tnode *s);
 void Translate_Exp(Tnode *s,Operand place);
+int fuckfuck(Type*t,char *dotname);
+Type* finddottype(Type* t,char* dotname);
 int fuckstructsize(Type* t,char* dotname);
 int ArraySize(Type* t,int n);
 int SizeofType(Type* t);

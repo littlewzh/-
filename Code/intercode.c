@@ -901,7 +901,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                     flag = 1;
                 }
                 else{
-                    arrlen++;//只有是数组时才计数维度
+                    if(!flag)arrlen++;//只有是数组时才计数维度
                 }
                 assert(cur!=NULL);
             }
@@ -917,7 +917,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                 addr->kind = TMPVAR_OP;
                 //下面要求arrsize,就要得到结构体dotname的类型
                 char *dotname;
-                while(!strcmp(cur->firstchild->name,"Exp")){
+                while(1){
                     if(!strcmp(cur->nextbro->nextbro->name,"ID")){//找到第一个解析出的ID就是DOTNAME
                         dotname = cur->nextbro->nextbro->s_val;
                         break; 
@@ -927,9 +927,14 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                         TODO
                     }
                 }
-                fuckstructsize(earr->type,dotname);//调用后就得到dotname的type为：tstructtype
-                assert(tstructtype->kind==ARRAY);
-                arrsize = ArraySize(tstructtype->u.array.elem,arrlen);
+                idebug("dotname= %s\n",dotname);
+                assert(dotname!=NULL);
+                Type* dott = finddottype(earr->type,dotname);
+                arrsize = ArraySize(dott->u.array.elem,arrlen);
+                idebug("AAAAAarrsize:%d\n",arrsize);
+                //fuckstructsize(earr->type,dotname);//调用后就得到dotname的type为：tstructtype
+                //assert(tstructtype->kind==ARRAY);
+                //arrsize = ArraySize(tstructtype->u.array.elem,arrlen);
             }
             else{//普通数组
                 assert(earr->type->kind==ARRAY);
@@ -978,6 +983,77 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
         }
         else if(!strcmp(cur->nextbro->name,"DOT")) {//结构体的属性
             idebug("In Exp:EXP-DOT\n");
+                //直接提取struct名字查表得到结构信息
+                while(strcmp(cur->firstchild->name,"ID")&&cur!=NULL){//直到找到结构体ID
+                    cur = cur->firstchild;
+                    if(!strcmp(cur->firstchild->name,"ID"))break;
+                }
+                char *structname = cur->firstchild->s_val;
+                Element* estruct = Search(structname);
+                assert(estruct!=NULL);//不可能找不到这个元素
+                //下面查看结构体信息找到对应属性
+                cur =s->firstchild->nextbro->nextbro;//ID
+                assert(cur!=NULL);
+                assert(!strcmp(cur->name,"ID"));
+                char *dotname = cur->s_val;
+                idebug("structname: %s ,dotname: %s\n",structname,dotname);
+                int offset = fuckfuck(estruct->type,dotname);//相对上层的偏移
+                Operand sizeop = (Operand)malloc(sizeof(Operand_d));
+                sizeop->kind = CONSTANT_OP;sizeop->u.value=offset;//偏移
+                Operand addr = NewTmp();//想得到DOT前的地址
+                if(!strcmp(s->firstchild->firstchild->name,"ID")&&s->firstchild->firstchild->nextbro==NULL){
+                    if(!strcmp(s->firstchild->firstchild->s_val,structname)){
+                        //说明就是结构体名，是第一个
+                        Operand op = (Operand)malloc(sizeof(Operand_d));//op是开头地址
+                        if(estruct->varflag == 1){//说明是形参，直接就是地址
+                            op->kind = VARIABLE_OP;op->u.name = structname;
+                        }
+                        else{
+                            op->kind = GETADDR_OP;op->u.name = structname;
+                        }
+                        NewInterCode(ASSIGN_IR,addr,op,NULL);
+                    Operand t5 = NewTmp();
+                    NewInterCode(ADD_IR,t5,addr,sizeop);//得到了属性对应地址
+                    if(place==NULL){
+                        Operand tmp = NewTmp();
+                        place->kind = tmp->kind;
+                        place->u.name = tmp->u.name;
+                    }
+                    Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
+                    fuck->u.name = place->u.name;
+                    fuck->kind = place->kind;
+                    NewInterCode(ASSIGN_IR,fuck,t5,NULL);
+                    if(place->kind = TMPVAR_OP){
+                        place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
+                    }
+                    else{
+                        place->kind = GETVAL_OP;
+                    }
+                    return;//直接走了
+                    }
+                }
+                    Operand tt = NewTmp();
+                    Translate_Exp(s->firstchild,tt);//知道了开头地址只要知道相对上一层的偏移
+                    tt->kind = TMPVAR_OP;//地址
+                    Operand t5 = NewTmp();
+                    NewInterCode(ADD_IR,t5,tt,sizeop);//得到了属性对应地址
+                    if(place==NULL){
+                        Operand tmp = NewTmp();
+                        place->kind = tmp->kind;
+                        place->u.name = tmp->u.name;
+                    }
+                    Operand fuck = (Operand)malloc(sizeof(Operand_d));                        
+                    fuck->u.name = place->u.name;
+                    fuck->kind = place->kind;
+                    NewInterCode(ASSIGN_IR,fuck,t5,NULL);
+                    if(place->kind = TMPVAR_OP){
+                        place->kind = GETVALTMP_OP;//修改这个kind使得传出去后在用的时候都解引用
+                    }
+                    else{
+                        place->kind = GETVAL_OP;
+                    }
+            //*/
+            /*
             int addflag = 0;//为1表示返回的是地址
             if(!strcmp(cur->firstchild->name,"ID")&&(cur->firstchild->nextbro == NULL)){
                 //直接提取struct名字查表得到结构信息
@@ -1032,8 +1108,13 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
             }
             else{
                 //Exp1不是直接是结构体的ID
+                int dotflag = 0;//为0表示前面确实都是a.b.c.d的形式，否则需要另外的方式
                 while(strcmp(cur->firstchild->name,"ID")){//直到找到结构体ID
                     cur = cur->firstchild;
+                    if(strcmp(cur->nextbro->name,"DOT")){
+                        //不是DOT了,寄
+                        dotflag = 1;
+                    }
                     assert(cur!=NULL);
                 }
                 //直接提取struct名字查表得到结构信息
@@ -1082,6 +1163,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
                     place->kind = GETVAL_OP;
                 }
             }
+            */
         }
         else{
             printf("Error in translate:wrong Exp in Exp\n");
@@ -1092,6 +1174,63 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
         printf("Error in translate:No Exp type\n");
         assert(0);
     }
+}
+int fuckfuck(Type*t,char *dotname){
+    idebug("fuckfuck\n");
+    //返回dotname相对上一层的差距
+    int size = 0;
+    if(t->kind==ARRAY){
+        return fuckfuck(t->u.array.elem,dotname);//刚传进来就是ARRAY，说明ARRAY的元素一定是struct
+    }
+    FieldList* ff = t->u.structure;
+    while(ff!=NULL){//遍历这一层
+        idebug("name: %s\n",ff->name);
+        if(!strcmp(ff->name,dotname)){
+            idebug("fuck find size: %d \n",size);
+            return size;
+        }
+        int tmp=0;
+        if(ff->type->kind==STRUCTURE||ff->type->kind==STRUCTVAR){
+            tmp = fuckfuck(ff->type,dotname);
+            if(tmp)return tmp;
+        }
+        if(ff->type->kind==ARRAY){
+                tmp = fuckfuck(ff->type,dotname);
+                if(tmp)return tmp;
+        }
+        //没找到，下一个
+        idebug("skip name :%s ,size: %d \n",ff->name, SizeofType(ff->type));
+        size += SizeofType(ff->type);
+        ff = ff->next;
+    }
+    return 0;
+}
+Type* finddottype(Type* t,char* dotname){
+    idebug("finddottype\n");
+    if(t->kind==STRUCTURE||t->kind==STRUCTVAR){
+        FieldList* ff = t->u.structure;
+        while(ff!=NULL){
+            idebug("name: %s\n",ff->name);
+            if(!strcmp(ff->name,dotname)){
+                idebug("!bingo!\n");
+                return ff->type;
+            }
+            if(ff->type!=BASIC){
+                Type* tmp = finddottype(ff->type,dotname);
+                if(tmp!=NULL)return tmp;
+            }
+            ff = ff->next;
+        }
+    }
+    else if(t->kind==ARRAY){
+        Type* tmp = finddottype(t->u.array.elem,dotname);
+        if(tmp!=NULL)return tmp;
+    }
+    else{
+        return NULL;
+    }
+    return NULL;
+    
 }
 int fuckstructsize(Type* t,char* dotname){
     idebug("In fuckstructsize\n");
