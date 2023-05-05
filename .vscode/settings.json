@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "typeinfo": "c",
-        "compare": "c",
-        "limits": "c",
-        "new": "c"
-    }
-}
