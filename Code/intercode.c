@@ -1,6 +1,6 @@
 #include "intercode.h"
 #define TODO assert(0);
-#define INTERCODEDEBUG
+//#define INTERCODEDEBUG
 #ifdef INTERCODEDEBUG
 #define idebug(...) printf(__VA_ARGS__)
 #else

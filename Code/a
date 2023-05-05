@@ -1,16 +1,23 @@
 
-FUNCTION PutQueen :
-PARAM a 
-t1 := #0 
-t2 := a 
-IF t2 != #0 GOTO label1 
-GOTO label3 
-LABEL label3 :
-t3 := b 
-IF t3 != #0 GOTO label1 
-GOTO label2 
-LABEL label1 :
-t1 := #1 
-LABEL label2 :
-x := t1 
+FUNCTION foo :
+PARAM sx 
+DEC s22 132 
+DEC s33 5548 
+DEC s111 248 
+DEC a1 16 
+DEC a2 4 
+bar := #1 
+t10 := &s33 
+t11 := t10 + #4 
+t9 := t11 
+t8 := t9 + #3696 
+t7 := t8 + #660 
+t12 := t7 + #8 
+t5 := t12 
+t13 := t5 + #4 
+t3 := t13 
+t2 := t3 + #96 
+t1 := t2 + #12 
+t14 := #1 
+*t1 := t14 
 RETURN #0 
