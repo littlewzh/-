@@ -33,6 +33,12 @@ int foo(struct s1 sx){
     write(s33.sff[4][5].s11.y[4][3]);
     return 0;
 }
+int main(){
+    struct s1 sxxx;
+
+    foo(sxxx);
+    return 0;
+}
 /*
 int main() {
     int a[2][3];
