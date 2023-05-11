@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "semantic.h"
 #include "intercode.h"
 extern void yyrestart(FILE*);
 extern int yylex();//调用yylex()进行词法分析
@@ -23,8 +22,9 @@ int main(int argc, char** argv){
         //dfs(root,0);
         semantic(root);
         if(!semerror && argc==3){//无语义错误，进行中间代码生成,传入参数是输出文件名
-            PrintInterCode(argv[2]); 
+            intercode(root,argv[2]);
         }
+        printf("----Finish Print Intercodes!---\n");
     }
     
 

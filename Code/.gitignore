@@ -3,6 +3,7 @@ a
 .ir
 parser
 *.txt
+*.s
 *.output
 syntax.tab.*
 !.gitignore

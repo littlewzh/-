@@ -24,6 +24,7 @@ struct InterCodes_ {
     struct InterCodes_ *prev;
     struct InterCodes_ *next; 
 };
+void intercode(Tnode* s,char* filename);
 void InterCodes_init();
 void PrintInterCode(char *filename);
 void PrintOperand(Operand op);

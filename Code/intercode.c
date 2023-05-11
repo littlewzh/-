@@ -77,6 +77,11 @@ void NewInterCode(int codekind,Operand op0,Operand op1,Operand op2){//生成一�
     }
 }
 
+void intercode(Tnode* s,char* filename){
+    InterCodes_init();
+    Translate_Program(s);
+    PrintInterCode(filename);
+}
 //模块主函数：调用中间代码生成器并打印到文件
 FILE* f;
 void PrintInterCode(char *filename){
@@ -86,7 +91,7 @@ void PrintInterCode(char *filename){
         printf("cannot open file : %s\n",filename);
         return;
     }
-    Translate_Program(root);
+    //Translate_Program(s);
     idebug("----Finish Translate program----\n");
     idebug("----Start Print Intercode----\n");
     InterCodes p = NULL;
@@ -312,7 +317,7 @@ void PrintOperand(Operand op){
 //中间代码翻译：迭代遍历语法生成树
 void Translate_Program(Tnode* s){//Program → 
     idebug("Translate_Program---\n");
-    InterCodes_init();
+    
     assert(!strcmp(s->name,"Program"));
     if(!strcmp(s->firstchild->name,"ExtDefList")) Translate_Extdeflist(s->firstchild);
 }
