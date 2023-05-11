@@ -1,3 +1,5 @@
+#ifndef NTREE_H
+#define NTREE_H
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,3 +27,4 @@ void insert_node(Tnode *p,Tnode* newn);
 void Ninsert(Tnode* p,int n,...);
 void dfs(Tnode* s,int dep);
 Tnode *childth_node(Tnode *p,int n);
+#endif

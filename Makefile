@@ -12,7 +12,7 @@ zip:
 git:
 	@git add -A --ignore-errors
 	@while (test -e .git/index.lock); do sleep 0.1; done
-	@(uname -a && uptime) | git commit -F - -q --no-verify --allow-empty
+	@(uname -n && date "+%Y-%m-%d %H:%M:%S") | git commit -F - -q --no-verify --allow-empty
 	@sync
 
 rm:

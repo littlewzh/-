@@ -1,0 +1,8 @@
+a
+*.o
+.ir
+parser
+*.txt
+*.output
+syntax.tab.*
+!.gitignore
