@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "intercode.h"
+#include "objectcode.h"
 extern void yyrestart(FILE*);
 extern int yylex();//调用yylex()进行词法分析
 extern int yyparse();
@@ -21,10 +21,16 @@ int main(int argc, char** argv){
     if(!errorflag){
         //dfs(root,0);
         semantic(root);
-        if(!semerror && argc==3){//无语义错误，进行中间代码生成,传入参数是输出文件名
+        if(!semerror && argc>=3){//无语义错误，进行中间代码生成,传入参数是输出文件名
             intercode(root,argv[2]);
+            printf("----Finish Print Intercodes!---\n");
+            if(argc == 4){
+                objectcode(argv[3]);
+                printf("----FINISH ASSEMBLE!---\n");
+            }
         }
-        printf("----Finish Print Intercodes!---\n");
+        
+
     }
     
 

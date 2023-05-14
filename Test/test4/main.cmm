@@ -1,12 +1,22 @@
+int mmul(int c,int b){
+    return c*2-b;
+}
 int main(){
     int n = read();
     int mul = read();
+
+    int t = (8*5)*7;    //280
+    int v = mmul(t*mul,n);
     int a,res;
-    while(n>0){
+    write(mul);
+    write(t);
+    write(v);
+    while(n>1){
         a = read();
         res = a*mul;
         write(res);
         n = n-1;
+        write(n);
     }
     return 0;
 }

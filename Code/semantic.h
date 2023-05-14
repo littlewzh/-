@@ -44,6 +44,7 @@ struct Element_{
     int dep;          //符号的深度
     int line;         //符号所在行
     int varflag;      //用来在中间代码中区分结构体/数组符号是否为形参，1为形参，0为非
+    int varnum;
 };
 
 

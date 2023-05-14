@@ -29,6 +29,7 @@ Operand NewTmp(){
     }
     res->kind = TMPVAR_OP;
     res->u.name = name;
+    res->tmp_num = tmpcnt;
     return res;
 }
 //NewLabel依次生成新的临时变量名
@@ -80,7 +81,9 @@ void NewInterCode(int codekind,Operand op0,Operand op1,Operand op2){//生成一�
 void intercode(Tnode* s,char* filename){
     InterCodes_init();
     Translate_Program(s);
+    //printf("here\n");
     PrintInterCode(filename);
+    printhash();
 }
 //模块主函数：调用中间代码生成器并打印到文件
 FILE* f;
@@ -222,7 +225,7 @@ void PrintInterCode(char *filename){
         p = p->next;
     }
     fclose(f);
-    printf("----Finish Print Intercodes!---\n");
+    
 }
 //打印操作数
 void PrintOperand(Operand op){
@@ -414,11 +417,14 @@ void Translate_VarList(Tnode *s){
         op->kind = VARIABLE_OP;
         op->u.name = paraname;
         NewInterCode(PARAM_IR,op,NULL,NULL);
+        //printf("para\n");
         //修改形参变量的element中的varflag值表明为形参
         Element* evar = Search(paraname);
         evar->varflag = 1;
     }
+    //cur = s->firstchild;
     if(cur->nextbro!=NULL){
+        printf("here\n");
         cur = cur->nextbro;//COMMA
         cur = cur->nextbro;
         assert(!strcmp(cur->name,"VarList"));
@@ -1241,7 +1247,7 @@ void TranslateExpCond(Tnode *s,Operand place){
 //翻译条件表达式
 void Translate_Cond(Tnode *s,Operand L1,Operand L2){
     idebug("Translate_Cond---\n");
-    Tnode *cur = s;//传入的s是第一个开始的Exp位置
+    Tnode *cur = s->firstchild;//传入的s是第一个开始的Exp位置
     if(!strcmp(cur->name,"NOT")){
         cur = cur->nextbro;//Exp
         Translate_Cond(cur,L2,L1);
@@ -1284,6 +1290,7 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
             NewInterCode(IFGOTO_IR,t1,op1,t2);
             NewInterCode(GOTO_IR,L1,NULL,NULL);
             NewInterCode(GOTO_IR,L2,NULL,NULL);//label 2
+            //printf("here\n");
             return;
         }else if(!strcmp(cur->nextbro->name,"AND")){
             Operand L0 = NewLabel();
@@ -1305,6 +1312,7 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
     }
     }
     //处理其他else情况??
+        printf("here\n");
         Operand t1=NewTmp();
         Translate_Exp(cur,t1);//code1
         //code2 = [IF t1 != #0 GOTO label_true]，trick是分成两行打印

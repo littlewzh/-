@@ -26,8 +26,25 @@ struct Operandlist_{
     Operand op;
     Operandlist* next;
 };
-void Varnum();
-void assemble(char* filename);
+
+typedef struct Baseblock_ Baseblock;
+
+struct Baseblock_{
+    InterCodes begin;
+    InterCodes end;
+};
+void reg_init();
+void var_init();
+void param_init();
+void param_insert(Operand op);
+void param_free();
+void obj_init();
 int findnum(Operand op);
-int GetReg(int num);
-void Ir_to_s(char* filename);
+void reg_spill(int regnum);
+void reg_free(int regnum);
+int reg_allocate(Operand op);
+void baseblock_split();
+void objectcode(char* filename);
+void gen_mipcode(char* filename);
+void useanaly(Operand op,int knum);
+

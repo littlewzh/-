@@ -7,22 +7,33 @@ typedef struct InterCode_ InterCode_d;
 typedef struct InterCodes_* InterCodes;
 //操作数的定义
 struct Operand_ {
-    enum { VARIABLE_OP,TMPVAR_OP,CONSTANT_OP,NUMBER_OP,GETADDR_OP,GETADDRTMP_OP, GETVAL_OP,GETVALTMP_OP,FUNC_OP} kind;
+    enum { 
+        VARIABLE_OP,TMPVAR_OP,
+        CONSTANT_OP,NUMBER_OP,
+        GETADDR_OP,GETADDRTMP_OP, 
+        GETVAL_OP,GETVALTMP_OP,
+        FUNC_OP} kind;
     union {
         char* name;//变量名字
         int value;//常量数值
+        
+        //char* rename; //为变量换名 
     } u;
+    int tmp_num;
 };
 //单条中间代码的数据结构定义
 struct InterCode_{
     enum { LABEL_IR,FUNC_IR,ASSIGN_IR,ADD_IR,SUB_IR,MUL_IR,DIV_IR,GOTO_IR,IFGOTO_IR,RETURN_IR,DEC_IR,ARG_IR,CALL_IR,PARAM_IR,READ_IR,WRITE_IR } kind; //指令类型,_IR防止重命名
     Operand op[3];//操作数（指针）op[0]是result
+    int intercodenum;
 };
 //所有的中间代码用双向链表形式存储
 struct InterCodes_ {
     struct InterCode_* code; 
     struct InterCodes_ *prev;
-    struct InterCodes_ *next; 
+    struct InterCodes_ *next;
+    int endflag; // 是否为基本块结束标志 
+    int startflag;
 };
 void intercode(Tnode* s,char* filename);
 void InterCodes_init();
