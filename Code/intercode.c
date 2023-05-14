@@ -82,7 +82,7 @@ void intercode(Tnode* s,char* filename){
     InterCodes_init();
     Translate_Program(s);
     //printf("here\n");
-    PrintInterCode(filename);
+    //PrintInterCode(filename);
     printhash();
 }
 //模块主函数：调用中间代码生成器并打印到文件

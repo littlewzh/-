@@ -32,3 +32,4 @@ result := #1
 LABEL label6 :
 WRITE result 
 RETURN #0 
+

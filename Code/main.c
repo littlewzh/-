@@ -23,9 +23,9 @@ int main(int argc, char** argv){
         semantic(root);
         if(!semerror && argc>=3){//无语义错误，进行中间代码生成,传入参数是输出文件名
             intercode(root,argv[2]);
-            printf("----Finish Print Intercodes!---\n");
-            if(argc == 4){
-                objectcode(argv[3]);
+            //printf("----Finish Print Intercodes!---\n");
+            if(argc == 3){
+                objectcode(argv[2]);
                 printf("----FINISH ASSEMBLE!---\n");
             }
         }
