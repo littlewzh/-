@@ -83,7 +83,7 @@ void intercode(Tnode* s,char* filename){
     Translate_Program(s);
     //printf("here\n");
     if(filename!=NULL) PrintInterCode(filename);
-    printhash();
+    //printhash();
 }
 //模块主函数：调用中间代码生成器并打印到文件
 FILE* f;

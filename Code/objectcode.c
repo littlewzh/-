@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "objectcode.h"
 
-#define ASSEMBLE
+//#define ASSEMBLE
 #ifdef ASSEMBLE
 #define adebug(...) printf(__VA_ARGS__)
 #else
@@ -50,7 +50,7 @@ void var_init(){
         }
     }
     varsymbol = (Var *)malloc(sizeof(Var[varcnt+tmpcnt+1]));
-    printf("varnum: %d\n",varcnt+tmpcnt+1);
+    //printf("varnum: %d\n",varcnt+tmpcnt+1);
     for(int i=1;i<varcnt+tmpcnt+1;i++){
         varsymbol[i].offset=0;
         varsymbol[i].reg = 0;

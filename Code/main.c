@@ -25,14 +25,14 @@ int main(int argc, char** argv){
             intercode(root,NULL);
             //printf("----Finish Print Intercodes!---\n");
             objectcode(argv[2]);
-            printf("----FINISH ASSEMBLE!---\n");
+            //printf("----FINISH ASSEMBLE!---\n");
         }else if(!semerror && argc==4){
             intercode(root,argv[2]);
             //printf("----Finish Print Intercodes!---\n");
             objectcode(argv[3]);
-            printf("----FINISH ASSEMBLE!---\n");
+            //printf("----FINISH ASSEMBLE!---\n");
         }else{
-            printf("not enough parameter\n");
+            //printf("not enough parameter\n");
         }
         
 
