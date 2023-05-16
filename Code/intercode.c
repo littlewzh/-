@@ -82,7 +82,7 @@ void intercode(Tnode* s,char* filename){
     InterCodes_init();
     Translate_Program(s);
     //printf("here\n");
-    //PrintInterCode(filename);
+    if(filename!=NULL) PrintInterCode(filename);
     printhash();
 }
 //模块主函数：调用中间代码生成器并打印到文件
@@ -249,7 +249,7 @@ void PrintOperand(Operand op){
                 assert(0);
             }
             s = op->u.name;
-            fprintf(f,"%s",s);
+            fprintf(f,"%s(%d)",s,op->tmp_num);
             break;
         case CONSTANT_OP://常量
             if(opdebug)idebug("Print OP CONSTANT\n");
@@ -984,6 +984,7 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
             Operand fuck = (Operand)malloc(sizeof(Operand_d));
             fuck->u.name = place->u.name;
             fuck->kind = place->kind;
+            fuck->tmp_num = place->tmp_num;
             NewInterCode(ADD_IR,fuck,addr,t4);//这里的fuck是place的地址，后面place都解引用
             if(place->kind = TMPVAR_OP){
                 place->kind=GETVALTMP_OP;

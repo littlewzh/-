@@ -1,4 +1,5 @@
 irsim/
+compilers-tests/
 *.zip
 .*
 !.gitignore

@@ -21,13 +21,18 @@ int main(int argc, char** argv){
     if(!errorflag){
         //dfs(root,0);
         semantic(root);
-        if(!semerror && argc>=3){//无语义错误，进行中间代码生成,传入参数是输出文件名
+        if(!semerror && argc==3){//无语义错误，进行中间代码生成,传入参数是输出文件名
+            intercode(root,NULL);
+            //printf("----Finish Print Intercodes!---\n");
+            objectcode(argv[2]);
+            printf("----FINISH ASSEMBLE!---\n");
+        }else if(!semerror && argc==4){
             intercode(root,argv[2]);
             //printf("----Finish Print Intercodes!---\n");
-            if(argc == 3){
-                objectcode(argv[2]);
-                printf("----FINISH ASSEMBLE!---\n");
-            }
+            objectcode(argv[3]);
+            printf("----FINISH ASSEMBLE!---\n");
+        }else{
+            printf("not enough parameter\n");
         }
         
 

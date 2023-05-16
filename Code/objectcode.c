@@ -13,6 +13,7 @@ extern InterCodes intercodeshead;
 FILE* fs;
 #define code(format,args...) fprintf(fs,format,##args)
 Reg mipreg[32];
+int use_reg1,use_reg2;  //；为了保证同一条运算分配的寄存器不冲突
 char* regname[32]={
     "$0","$1",      
     "$v0","$v1",   //表达式求值或函数结果 2-3
@@ -140,6 +141,17 @@ int reg_allocate(Operand op){
     }
     //分析基本块，分析变量使用信息
     // 此时没有空闲的寄存器
+    //???????位于同一个三地址代码中的几个变量不能分配一个寄存器
+    for(int i=8;i<26;i++){
+        if(i!=use_reg1 && i!=use_reg2){
+            reg_spill(i);
+            mipreg[i].free = 1;
+            mipreg[i].var_num = varnum;
+            varsymbol[varnum].reg = i;
+            return i;
+        }
+    }
+    assert(0);
     int res = 0;int far = 0;
     for(int i=8;i<26;i++){            //找到离当前使用最远的变量寄存器
         int k = mipreg[i].var_num;
@@ -241,26 +253,12 @@ void gen_mipcode(char* filename){
         }*/
         InterCode i = p->code;
         //printf("%d\n",i->intercodenum);
+        use_reg1 = 0;
+        use_reg2 = 0;
         switch (i->kind){
-        case LABEL_IR:{
-            if(p->prev->code->kind!=GOTO_IR){
-                for(int i=8;i<26;i++){
-                    reg_spill(i);
-                }
-            }
-            char* label = i->op[0]->u.name;//analy_Operand(i->op[0]); 
-            code("%s :\n",label);
-            if(i->op[0]->tmp_num!=0) Sp_offset = i->op[0]->tmp_num;
-            for(int i=8;i<26;i++){
-                if(mipreg[i].free){
-                    mipreg[i].free = 0;
-                    int varnum = mipreg[i].var_num;
-                    varsymbol[varnum].reg = 0;
-                }
-            }
-            break; 
-        }
+        
         case READ_IR:{
+            
             int reg = reg_allocate(i->op[0]);
 
             //printf("reg: %d\n",reg);
@@ -282,10 +280,24 @@ void gen_mipcode(char* filename){
             fprintf(fs,"addi $sp, $sp, 4\n");
             break;
         }
+        case DEC_IR:{
+            int size = i->op[1]->u.value;
+            code("addi $sp, $sp, %d\n",-size);
+            Sp_offset += size;
+            int reg1 = reg_allocate(i->op[0]);
+            code("move $%d, $sp\n",reg1);
+            int varnum = findnum(i->op[0]);
+            code("addi $sp, $sp, -4\n");
+            Sp_offset+=4;
+            code("sw $%d, 0($sp)\n",reg1);
+            varsymbol[varnum].offset = Sp_offset;
+            break;
+        }
         case ASSIGN_IR:{
             Operand left = i->op[0];
             Operand right = i->op[1];
             int reg1 = reg_allocate(left);
+            use_reg1 = reg1;
             if(left->kind == VARIABLE_OP || left->kind == TMPVAR_OP){
                 switch (right->kind)
                 {
@@ -309,6 +321,13 @@ void gen_mipcode(char* filename){
                     code("lw $%d, 0($%d)\n",reg1,reg2);
                     break;
                 }
+                case GETADDR_OP:
+                case GETADDRTMP_OP:
+                {
+                    int reg2 = reg_allocate(right);
+                    code("move $%d, $%d\n",reg1,reg2);
+                    break;
+                }
                 default:
                     break;
                 }
@@ -328,6 +347,7 @@ void gen_mipcode(char* filename){
         }    
         case ADD_IR:{
             int reg1 = reg_allocate(i->op[0]);
+            use_reg1 = reg1;
             Operand op1,op2;
             if(i->op[1]->kind == CONSTANT_OP) {
                 op1 = i->op[2];
@@ -342,6 +362,7 @@ void gen_mipcode(char* filename){
                 code("addi $%d, $%d, %d\n",reg1,reg2,op2->u.value);
             }else{
                 int reg2 = reg_allocate(op1);
+                use_reg2 = reg2;
                 int reg3 = reg_allocate(op2);
                 code("add $%d, $%d, $%d\n",reg1,reg2,reg3);
             }
@@ -349,6 +370,7 @@ void gen_mipcode(char* filename){
         }
         case SUB_IR:{
             int reg1 = reg_allocate(i->op[0]);
+            use_reg1 = reg1;
             Operand op1,op2;
             if(i->op[1]->kind == CONSTANT_OP) {
                 op1 = i->op[2];
@@ -363,6 +385,7 @@ void gen_mipcode(char* filename){
                 code("addi $%d, $%d, -%d\n",reg1,reg2,op2->u.value);
             }else{
                 int reg2 = reg_allocate(op1);
+                use_reg2 = reg2;
                 int reg3 = reg_allocate(op2);
                 code("sub $%d, $%d, $%d\n",reg1,reg2,reg3);
             }
@@ -370,6 +393,7 @@ void gen_mipcode(char* filename){
         }
         case MUL_IR:{
             int reg1 = reg_allocate(i->op[0]);
+            use_reg1 = reg1;
             int reg2,reg3;
             Operand op1,op2;
             if(i->op[1]->kind == CONSTANT_OP){
@@ -378,6 +402,7 @@ void gen_mipcode(char* filename){
             }else{
                 reg2 = reg_allocate(i->op[1]);
             }
+            use_reg2 = reg2;
             if(i->op[2]->kind == CONSTANT_OP){
                 code("li $v1, %d\n",i->op[2]->u.value);
                 reg3 = 3;
@@ -389,6 +414,7 @@ void gen_mipcode(char* filename){
         }
         case DIV_IR:{
             int reg1 = reg_allocate(i->op[0]);
+            use_reg1 = reg1;
             int reg2,reg3;
             Operand op1,op2;
             if(i->op[1]->kind == CONSTANT_OP){
@@ -397,6 +423,7 @@ void gen_mipcode(char* filename){
             }else{
                 reg2 = reg_allocate(i->op[1]);
             }
+            use_reg2 = reg2;
             if(i->op[2]->kind == CONSTANT_OP){
                 code("li $v1, %d\n",i->op[2]->u.value);
                 reg3 = 3;
@@ -406,6 +433,24 @@ void gen_mipcode(char* filename){
             code("div $%d, $%d\n",reg2,reg3);
             code("mflo $%d\n",reg1);
             break;
+        }
+        case LABEL_IR:{
+            if(p->prev->code->kind!=GOTO_IR){
+                for(int i=8;i<26;i++){
+                    reg_spill(i);
+                }
+            }
+            char* label = i->op[0]->u.name;//analy_Operand(i->op[0]); 
+            code("%s :\n",label);
+            if(i->op[0]->tmp_num!=0) Sp_offset = i->op[0]->tmp_num;
+            for(int i=8;i<26;i++){
+                if(mipreg[i].free){
+                    mipreg[i].free = 0;
+                    int varnum = mipreg[i].var_num;
+                    varsymbol[varnum].reg = 0;
+                }
+            }
+            break; 
         }
         case GOTO_IR:{
             for(int i=8;i<26;i++){
@@ -424,6 +469,7 @@ void gen_mipcode(char* filename){
             }else{
                 reg1 = reg_allocate(i->op[0]);
             }
+            use_reg1 = reg1;
             if(i->op[2]->kind == CONSTANT_OP){
                 code("li $v1, %d\n",i->op[2]->u.value);
                 reg2 = 3;
@@ -494,7 +540,9 @@ void gen_mipcode(char* filename){
                         rreg=2;
                         code("li $v0, %d\n",cur->op->u.value);
                     }else{
-                        rreg= reg_allocate(cur->op);
+                        int num = findnum(cur->op);
+                        code("lw $v0, %d($fp)\n",-varsymbol[num].offset);
+                        rreg= 2;
                     }
                     code("addi $sp, $sp, -4\n");
                     code("sw $%d, 0($sp)\n",rreg);
