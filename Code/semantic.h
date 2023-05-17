@@ -24,6 +24,7 @@ struct Type_{
             int num;         //参数个数
             Type* retval;    //返回类型
             FieldList* args; //参数类型
+            FieldList* deflist;
             enum {
                 DEC,
                 DEC_UNDEF,

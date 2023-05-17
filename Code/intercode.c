@@ -367,8 +367,10 @@ void Translate_Extdef(Tnode *s){
         if(!strcmp(cur->nextbro->name,"CompSt")){
             //field=Fundec(cur,def,1);  //调用Fundec只是用来插入元素属性
             Translate_FunDec(cur);
+            Element* f = Search(cur->firstchild->s_val);
             cur = cur->nextbro;
-            Translate_CompSt(cur);
+            FieldList* ff=Translate_CompSt(cur);
+            f->type->u.func.deflist = ff;
         }
         else{//函数声明：假设没有
             TODO
@@ -422,9 +424,9 @@ void Translate_VarList(Tnode *s){
         Element* evar = Search(paraname);
         evar->varflag = 1;
     }
-    //cur = s->firstchild;
+    cur = s->firstchild;
     if(cur->nextbro!=NULL){
-        printf("here\n");
+        //printf("here\n");
         cur = cur->nextbro;//COMMA
         cur = cur->nextbro;
         assert(!strcmp(cur->name,"VarList"));
@@ -433,13 +435,13 @@ void Translate_VarList(Tnode *s){
     
 }
 
-void Translate_CompSt(Tnode *s){
+FieldList* Translate_CompSt(Tnode *s){
 //CompSt → LC DefList StmtList RC
     idebug("Translate_CompSt---\n");
     assert(!strcmp(s->name,"CompSt"));
     Tnode* cur = childth_node(s,2);//DefList
     if(!strcmp(cur->name,"DefList")) {
-        FieldList* h=(FieldList*)malloc(sizeof(FieldList));
+        FieldList* h=NULL;
         h=Deflist(cur,NULL,0);//加入局部定义的所有变量类型等后面使用
         Translate_DefList(cur);
         if(cur->nextbro !=NULL){
@@ -449,15 +451,16 @@ void Translate_CompSt(Tnode *s){
             }
         }
         else{//StmtList为空：直接不干
-            return;
+            
         }
+        return h;
     }
     else if(!strcmp(cur->name,"StmtList")) {//DefList为空
         Translate_StmtList(cur);
-        return;
+        return NULL;
     }
     else{//DefList和StmtList都是空，直接不干
-        return;
+        return NULL;
     }
     
 }
@@ -890,15 +893,15 @@ void Translate_Exp(Tnode *s,Operand place){//place是Exp前可能的变量，也
         }
         else if(!strcmp(cur->nextbro->name,"AND")) {
             idebug("In Exp:EXP-AND\n");
-            TranslateExpCond(cur,place);
+            TranslateExpCond(s,place);
         }
         else if(!strcmp(cur->nextbro->name,"OR")) {
             idebug("In Exp:EXP-OR\n");
-            TranslateExpCond(cur,place);
+            TranslateExpCond(s,place);
         }
         else if(!strcmp(cur->nextbro->name,"RELOP")) {
             idebug("In Exp:EXP-RELOP\n");
-            TranslateExpCond(cur,place);
+            TranslateExpCond(s,place);
         }
         else if(!strcmp(cur->nextbro->name,"LB")) {//数组
         //EXP1 LB EXP2 RB,EXP1是地址，EXP2是整数    
@@ -1254,6 +1257,11 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
         Translate_Cond(cur,L2,L1);
         return;
     }
+    else if(!strcmp(cur->name,"LP")){
+        cur = cur->nextbro;//Exp
+        Translate_Cond(cur,L1,L2);
+        return;
+    }
     else if(!strcmp(cur->name,"Exp")){
         if(cur->nextbro!=NULL){
         if(!strcmp(cur->nextbro->name,"RELOP")){
@@ -1305,17 +1313,20 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
             Operand L0 = NewLabel();
             strcpy(cur->nextbro->name,"FUCK");
             Translate_Cond(cur,L1,L0);//code1
+            
             NewInterCode(LABEL_IR,L0,NULL,NULL);//label 0
             cur = cur->nextbro->nextbro;//EXP2
             Translate_Cond(cur,L1,L2);//code2
             return;
+        }else{
+            
         }
     }
     }
     //处理其他else情况??
-        printf("here\n");
+        //printf("here\n");
         Operand t1=NewTmp();
-        Translate_Exp(cur,t1);//code1
+        Translate_Exp(s,t1);//code1
         //code2 = [IF t1 != #0 GOTO label_true]，trick是分成两行打印
         Operand op0 = (Operand)malloc(sizeof(Operand_d)); // op0是#0
         op0->kind = CONSTANT_OP;op0->u.value = 0;
@@ -1324,4 +1335,5 @@ void Translate_Cond(Tnode *s,Operand L1,Operand L2){
         NewInterCode(IFGOTO_IR,t1,op1,op0);
         NewInterCode(GOTO_IR,L1,NULL,NULL);
         NewInterCode(GOTO_IR,L2,NULL,NULL);//label 2
+        
 }

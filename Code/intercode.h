@@ -44,7 +44,7 @@ void Translate_Extdeflist(Tnode *s);
 void Translate_Extdef(Tnode *s);
 void Translate_FunDec(Tnode *s);
 void Translate_VarList(Tnode *s);
-void Translate_CompSt(Tnode *s);
+FieldList* Translate_CompSt(Tnode *s);
 void Translate_DefList(Tnode *s);
 void Translate_Def(Tnode *s);
 void Translate_DecList(Tnode *s);

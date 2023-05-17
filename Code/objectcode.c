@@ -95,11 +95,15 @@ int findnum(Operand op){
     return 0;
     
 }
-void regcheck(int knum){
+void regtmpcheck(int knum){
     for(int i=8;i<26;i++){
-        if(mipreg[i].free && mipreg[i].var_num > varcnt){
-            int num = mipreg[i].var_num;
-            if(varsymbol[num].lastuse<knum) reg_spill(i); 
+        if(mipreg[i].free){
+            int var = mipreg[i].var_num;
+            if(var > varcnt){
+                mipreg[i].free = 0;
+                mipreg[i].var_num = 0;
+                varsymbol[var].reg = 0;
+            }
         }
     }
 }
@@ -145,6 +149,9 @@ int reg_allocate(Operand op){
     for(int i=8;i<26;i++){
         if(i!=use_reg1 && i!=use_reg2){
             reg_spill(i);
+            if(varsymbol[varnum].offset!=0){
+                code("lw $%d, %d($fp)\n",i,-varsymbol[varnum].offset);
+            }
             mipreg[i].free = 1;
             mipreg[i].var_num = varnum;
             varsymbol[varnum].reg = i;
@@ -284,8 +291,9 @@ void gen_mipcode(char* filename){
             int size = i->op[1]->u.value;
             code("addi $sp, $sp, %d\n",-size);
             Sp_offset += size;
+            int dd = Sp_offset;
             int reg1 = reg_allocate(i->op[0]);
-            code("move $%d, $sp\n",reg1);
+            code("addi $%d, $fp, %d\n",reg1,-dd);
             int varnum = findnum(i->op[0]);
             code("addi $sp, $sp, -4\n");
             Sp_offset+=4;
@@ -336,6 +344,10 @@ void gen_mipcode(char* filename){
                 if(right->kind == CONSTANT_OP){
                     code("li $v0, %d\n",right->u.value);
                     reg2=2;
+                }else if(right->kind == GETVAL_OP || right->kind == GETVALTMP_OP){
+                    reg2 = reg_allocate(right);
+                    code("lw $v0, 0($%d)\n",reg2);
+                    reg2 = 2;
                 }else{
                     reg2 = reg_allocate(right);
                 }
@@ -372,7 +384,21 @@ void gen_mipcode(char* filename){
             int reg1 = reg_allocate(i->op[0]);
             use_reg1 = reg1;
             Operand op1,op2;
-            if(i->op[1]->kind == CONSTANT_OP) {
+            int reg2,reg3;
+            if(i->op[1]->kind == CONSTANT_OP){
+                code("li $v0, %d\n",i->op[1]->u.value);
+                reg2 = 2;
+            }else{
+                reg2 = reg_allocate(i->op[1]);
+            }
+            use_reg2 = reg2;
+            if(i->op[2]->kind == CONSTANT_OP){
+                code("li $v1, %d\n",i->op[2]->u.value);
+                reg3 = 3;
+            }else{
+                reg3 = reg_allocate(i->op[2]);
+            }
+            /*if(i->op[1]->kind == CONSTANT_OP) {
                 op1 = i->op[2];
                 op2 = i->op[1];
             }
@@ -388,7 +414,8 @@ void gen_mipcode(char* filename){
                 use_reg2 = reg2;
                 int reg3 = reg_allocate(op2);
                 code("sub $%d, $%d, $%d\n",reg1,reg2,reg3);
-            }
+            }*/
+            code("sub $%d, $%d, $%d\n",reg1,reg2,reg3);
             break;
         }
         case MUL_IR:{
@@ -436,6 +463,7 @@ void gen_mipcode(char* filename){
         }
         case LABEL_IR:{
             if(p->prev->code->kind!=GOTO_IR){
+                regtmpcheck(0);
                 for(int i=8;i<26;i++){
                     reg_spill(i);
                 }
@@ -443,6 +471,7 @@ void gen_mipcode(char* filename){
             char* label = i->op[0]->u.name;//analy_Operand(i->op[0]); 
             code("%s :\n",label);
             if(i->op[0]->tmp_num!=0) Sp_offset = i->op[0]->tmp_num;
+            code("addi $sp, $fp, %d\n",-Sp_offset);
             for(int i=8;i<26;i++){
                 if(mipreg[i].free){
                     mipreg[i].free = 0;
@@ -453,6 +482,7 @@ void gen_mipcode(char* filename){
             break; 
         }
         case GOTO_IR:{
+            regtmpcheck(0);
             for(int i=8;i<26;i++){
                     reg_spill(i);
             }
@@ -466,12 +496,20 @@ void gen_mipcode(char* filename){
             if(i->op[0]->kind == CONSTANT_OP){
                 code("li $v0, %d\n",i->op[0]->u.value);
                 reg1 = 2;
+            }else if(i->op[0]->kind == GETVAL_OP || i->op[0]->kind ==GETVALTMP_OP){
+                reg1 = reg_allocate(i->op[0]);
+                code("lw $v0, 0($%d)\n",reg1);
+                reg1 = 2;
             }else{
                 reg1 = reg_allocate(i->op[0]);
             }
             use_reg1 = reg1;
             if(i->op[2]->kind == CONSTANT_OP){
                 code("li $v1, %d\n",i->op[2]->u.value);
+                reg2 = 3;
+            }else if(i->op[2]->kind == GETVAL_OP || i->op[2]->kind ==GETVALTMP_OP){
+                reg2 = reg_allocate(i->op[2]);
+                code("lw $v1, 0($%d)\n",reg2);
                 reg2 = 3;
             }else{
                 reg2 = reg_allocate(i->op[2]);
@@ -525,10 +563,15 @@ void gen_mipcode(char* filename){
                     if(cur->op->kind == CONSTANT_OP){
                         rreg=2;
                         code("li $v0, %d\n",cur->op->u.value);
-                    }else{
+                    }else if(cur->op->kind == GETVAL_OP || cur->op->kind == GETVALTMP_OP){
                         int num = findnum(cur->op);
                         code("lw $v0, %d($fp)\n",-varsymbol[num].offset);
-                        rreg=2;
+                        code("lw $8, 0($v0)\n");
+                        rreg=8;
+                    }else{
+                        int num = findnum(cur->op);
+                        code("lw $t0, %d($fp)\n",-varsymbol[num].offset);
+                        rreg=8;
                     }
                     
                     //mipreg[tmp].var_num = findnum(cur->op);
@@ -539,6 +582,11 @@ void gen_mipcode(char* filename){
                     if(cur->op->kind == CONSTANT_OP){
                         rreg=2;
                         code("li $v0, %d\n",cur->op->u.value);
+                    }else if(cur->op->kind == GETVAL_OP || cur->op->kind == GETVALTMP_OP){
+                        int num = findnum(cur->op);
+                        code("lw $v0, %d($fp)\n",-varsymbol[num].offset);
+                        code("lw $v1, 0($v0)\n");
+                        rreg=3;
                     }else{
                         int num = findnum(cur->op);
                         code("lw $v0, %d($fp)\n",-varsymbol[num].offset);
@@ -588,7 +636,17 @@ void gen_mipcode(char* filename){
                 }
                 p= p->next;
             }
-            
+            FieldList* f = Search(i->op[0]->u.name)->type->u.func.deflist;
+            FieldList* fcur = f;
+            while(fcur!=NULL){
+                if(fcur->type->kind == BASIC){
+                    int varnum = Search(fcur->name)->varnum;
+                    code("addi $sp, $sp, -4\n");
+                    Sp_offset+=4;
+                    varsymbol[varnum].offset = Sp_offset;
+                }
+                fcur = fcur->next;
+            }
             continue;
             break;
         }
