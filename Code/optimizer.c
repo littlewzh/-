@@ -34,6 +34,9 @@ InterCode AddInterCode(BasicBlock block,int codekind,Operand op0,Operand op1,Ope
 }
 //makeop 利用变量名的特性根据名字得到op
 Operand makeop(char *name){
+    assert(name!=NULL);
+    int opdebug = 1;
+    if(opdebug)odebug("In opdebug: name = %s\n",name);
     Operand op = (Operand)malloc(sizeof(Operand_d));
     char *s;
     switch(name[0]){
@@ -67,32 +70,36 @@ Operand makeop(char *name){
 void readinput(char* filename){
 //输入模块读取输入文件信息到数据结构
     odebug("-----Read Input Begin-----\n");
+    int rdebug = 1;
+    char buf[500];//读取一行
+    //一个获取要开辟多大的基本块数组的trick：先遍历一遍代码看看有多少goto、return，这些是结尾，所以数量不超过这个值
     f = fopen(filename, "r");
     if (!f){
         printf("cannot open file : %s\n",filename);
         return;
     }
-    char buf[500];//读取一行
-    //一个获取要开辟多大的基本块数组的trick：先遍历一遍代码看看有多少goto、return，这些是结尾，所以数量不超过这个值
     while(fgets(buf,500,f)!=NULL){//读入一行到buf
-        if(buf[0]=='G'||buf[0]=='I'||buf[0]=='C'||buf[0]=='R'&&buf[2]=='T')blocknum++;
+        if(buf[0]=='G'||buf[0]=='L'||buf[0]=='I'||buf[0]=='C'||buf[0]=='R'&&buf[2]=='T')blocknum++;
     }
-    bb = (BasicBlock*)malloc(sizeof(BasicBlock)*blocknum*2);//申请bb数组空间
     fclose(f);
+    if(rdebug)odebug("guess blocknum:%d\n",blocknum);
+    //下面正式读入
+    bb = (BasicBlock*)malloc(sizeof(BasicBlock)*blocknum*2);//申请bb数组空间
     int linenum = 0;//记录行数
     int blockno = 0;//记录块序号
     BasicBlock curb = NULL;//当前块的指针
     f = fopen(filename, "r");
     while(fgets(buf,500,f)!=NULL){//读入一行到buf
         linenum++;
-        odebug("Line %d : ",linenum);
+        if(rdebug)odebug("Line %d : %s\n",linenum,buf);
         int linelen = strlen(buf);//长度
         //每次都先申请好待用的op避免冗余代码
         Operand op0 = (Operand)malloc(sizeof(Operand_d));
         Operand op1 = (Operand)malloc(sizeof(Operand_d));
         Operand op2 = (Operand)malloc(sizeof(Operand_d));
-        //如果当前块为空就新增一个
-        if(curb==NULL){
+        //如果当前块为空,或者是label就新增一个
+        if(curb==NULL||buf[0]=='L'){
+            //if(rdebug)odebug(" (new bb) ");
             curb = (BasicBlock)malloc(sizeof(BasicBlock_d));
             bb[blockno]=curb;//记录到数组里,编号从0开始
             curb->no = blockno;
@@ -105,30 +112,31 @@ void readinput(char* filename){
         }
         //下面对该行解析出指令内容
         if(buf[0]=='\n'){//空行
-            odebug("null\n");
+            if(rdebug)odebug("null\n");
             continue;
         }
         else if (buf[0]=='F'){//新函数=>新基本块
-            odebug("new function");
+            if(rdebug)odebug("function: \n");
             op0->kind = FUNC_OP;
-            sscanf(buf, "FUNCTION %s :", op0->u.name);
+            sscanf(buf, "FUNCTION %s :\n", op0->u.name);
+            assert(op0->u.name!=NULL);
             AddInterCode(curb,FUNC_IR,op0,NULL,NULL);
         }
         else if (buf[0]=='L'){//新标签=>新基本块
-            odebug("new label");
+            if(rdebug)odebug("new label\n");
             op0->kind = LABEL_OP;
             sscanf(buf, "LABEL label%d :", &op0->u.no);
             AddInterCode(curb,LABEL_IR,op0,NULL,NULL);
         }
         else if (buf[0]=='G'){//GOTO=>基本块末尾
-            odebug("GOTO");
+            if(rdebug)odebug("GOTO\n");
             op0->kind = LABEL_OP;
             sscanf(buf, "GOTO label%d", &op0->u.no);
             AddInterCode(curb,GOTO_IR,op0,NULL,NULL);
             curb=NULL;
         }
         else if (buf[0]=='I'){//IF_GOTO=>基本块末尾
-            odebug("IF_GOTO");
+            if(rdebug)odebug("IF_GOTO\n");
             op0->kind = LABEL_OP;
             char *s1;
             char *s2;
@@ -139,7 +147,7 @@ void readinput(char* filename){
             curb=NULL;
         }
         else if (buf[0]=='R'&&buf[2]=='T'){//RETURN=>基本块末尾
-            odebug("RETURN");
+            if(rdebug)odebug("RETURN\n");
             char *s;
             sscanf(buf,"RETURN %s",s);
             op0 = makeop(s);
@@ -147,7 +155,7 @@ void readinput(char* filename){
             curb = NULL;
         }
         else if (buf[0]=='D'){//DEC
-            odebug("DEC");
+            if(rdebug)odebug("DEC\n");
             char *s;
             int size;
             sscanf(buf,"DEC %s %d",s,&size);
@@ -156,39 +164,39 @@ void readinput(char* filename){
             newcode->e.decsize = size;
         }
         else if (buf[0]=='A'){//ARG
-            odebug("ARG");
+            if(rdebug)odebug("ARG\n");
             char *s;
             sscanf(buf,"ARG %s",s);
             op0 = makeop(s);
             AddInterCode(curb,ARG_IR,op0,NULL,NULL);
         }
         else if (buf[0]=='P'){//PARAM
-            odebug("PARAM");
+            if(rdebug)odebug("PARAM\n");
             char *s;
             sscanf(buf,"PARAM %s",s);
             op0 = makeop(s);
             AddInterCode(curb,PARAM_IR,op0,NULL,NULL);
         }
         else if (buf[0]=='C'){//CALL在开头？？
-            odebug("CALL");
+            if(rdebug)odebug("CALL\n");
             TODO
         }
         else if (buf[0]=='R'&&buf[2]=='A'){//READ
-            odebug("READ");
+            if(rdebug)odebug("READ\n");
             char *s;
             sscanf(buf,"READ %s",s);
             op0 = makeop(s);
             AddInterCode(curb,READ_IR,op0,NULL,NULL);
         }
         else if (buf[0]=='W'){//WRITE
-            odebug("WRITE");
+            if(rdebug)odebug("WRITE\n");
             char *s;
             sscanf(buf,"WRITE %s",s);
             op0 = makeop(s);
             AddInterCode(curb,WRITE_IR,op0,NULL,NULL);
         }
         else if (buf[0]=='v'||buf[0]=='t'||buf[0]=='*'||buf[0]=='&'){//
-            odebug("ASSIGN...");
+            if(rdebug)odebug("ASSIGN...\n");
             char *s1,*s2,*s3;
             int kind = ASSIGN_IR;//默认就是ass
             for(int i = 0;i<linelen;i++){
@@ -219,7 +227,9 @@ void readinput(char* filename){
                 else if(buf[i]=='C'){
                     kind = CALL_IR;
                     sscanf(buf,"%s := CALL %s",s1,s2);
-                    AddInterCode(curb,CALL_IR,makeop(s1),makeop(s2),NULL);
+                    op1->kind=FUNC_OP;
+                    op1->u.name = s2;
+                    AddInterCode(curb,CALL_IR,makeop(s1),op1,NULL);
                     break;
                 }
             }
@@ -229,11 +239,12 @@ void readinput(char* filename){
             }
         }
         else{
-            odebug("wrong type in line:%d",linenum);
+            if(rdebug)odebug("wrong type in line:%d",linenum);
             assert(0);
         }
     }
     fclose(f);
+    blocknum = blockno;//真正的块数量
     odebug("-----Read Input Finished!-----\n");
 }
 void optimize(){
@@ -273,7 +284,7 @@ void PrintOperand(Operand op){
             break;
         case FUNC_OP://函数名
             if(opdebug)odebug("Print OP FUNCOP\n");
-            fprintf(f,"t%d",op->u.name);
+            fprintf(f,"t%s",op->u.name);
             break;
         default:
             printf("Error in PrintOperand:wrong type\n");
