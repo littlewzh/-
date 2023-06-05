@@ -249,7 +249,7 @@ void PrintOperand(Operand op){
                 assert(0);
             }
             s = op->u.name;
-            fprintf(f,"%s(%d)",s,op->tmp_num);
+            fprintf(f,"%s",s);
             break;
         case CONSTANT_OP://常量
             if(opdebug)idebug("Print OP CONSTANT\n");

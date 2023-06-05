@@ -463,7 +463,7 @@ void gen_mipcode(char* filename){
         }
         case LABEL_IR:{
             if(p->prev->code->kind!=GOTO_IR){
-                regtmpcheck(0);
+                //regtmpcheck(0);
                 for(int i=8;i<26;i++){
                     reg_spill(i);
                 }
