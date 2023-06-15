@@ -1,0 +1,6 @@
+FUNCTION main :
+v1 := t1
+t1 := v1
+t2 := v2
+t3 := t2 + #1
+WRITE t3

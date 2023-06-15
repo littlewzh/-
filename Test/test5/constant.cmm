@@ -1,0 +1,10 @@
+FUNCTION main :
+t1 := #1
+t2 := t1
+t3 := t1 + t2
+IF t3 <= v1 GOTO label1 
+IF t3 <= t2 GOTO label1 
+WRITE t3
+READ t1
+t2 := t1
+RETURN #0

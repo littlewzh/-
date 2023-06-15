@@ -16,7 +16,7 @@ v7 := t7
 t8 := v3 * v5
 v8 := t8
 t9 := v7 - v4
-v9 := t9//
+v9 := t9
 LABEL label1 :
 IF v3 < v9 GOTO label2
 GOTO label3

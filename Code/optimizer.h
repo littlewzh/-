@@ -5,12 +5,15 @@
 #include <stdarg.h>
 typedef struct Operand_* Operand;
 typedef struct Operand_ Operand_d;
+typedef struct Symbol_* Symbol;
+typedef struct Symbol_ Symbol_d;
 typedef struct InterCode_* InterCode;
 typedef struct InterCode_ InterCode_d;
 typedef struct BasicBlock_ BasicBlock_d;
 typedef struct BasicBlock_* BasicBlock;
 typedef struct DAGNode_ DAGNode_d;
 typedef struct DAGNode_* DAGNode;
+
 //操作数的定义
 struct Operand_ {
     enum { VARIABLE_OP,TMPVAR_OP,CONSTANT_OP,GETADDR_OP, GETVAL_OP,LABEL_OP,FUNC_OP} kind;
@@ -20,6 +23,7 @@ struct Operand_ {
         int value;//常量CONSTANT的数值
         Operand op;//取地址和解引用使用的操作数
     } u;
+    int ver;//记录这个操作数当前版本
 };
 //中间代码链表的数据结构定义
 struct InterCode_{
@@ -28,7 +32,7 @@ struct InterCode_{
     union{
         char* relop;
         int decsize;
-    }e;//附加信息,relop的内容
+    }e;//不放在op里的附加信息
     struct InterCode_ *prev;
     struct InterCode_ *next;
 };
@@ -43,13 +47,17 @@ struct BasicBlock_ {
     struct BasicBlock_ *next[2]; //后驱的基本块最多就两个（因为IF），记录两个指针
 };
 
+//DAG节点数据结构
 struct DAGNode_{
     enum {
         ASSIGN_NODE, ADD_NODE, SUB_NODE, MUL_NODE, DIV_NODE, LEAF_NODE
     } kind; // 节点的类型
+    int no;//数组序号
+    int used;//节点被使用次数
     Operand op;//节点上的操作数
     DAGNode leftchild,rightchild;//左右子树
 };
+
 void readinput(char* filename);
 void optimize();
 void printoutput(char *filename);
